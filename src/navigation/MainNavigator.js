@@ -1,0 +1,61 @@
+import React, { useEffect, useState } from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { checkAuthState } from '../store/slices/authSlice';
+import SplashScreen from '../screens/SplashScreen';
+import LoginScreen from '../screens/auth/Login';
+import TabNavigator from './TabNavigator';
+import TaskDetail from '../screens/tasks/TaskDetail';
+import MaterialUsageScreen from '../components/MaterialUsage';
+import EditProfile from '../screens/setting/EditProfile';
+
+const Stack = createNativeStackNavigator();
+
+const MainNavigator = () => {
+    const dispatch = useDispatch();
+    const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
+    const [showSplash, setShowSplash] = useState(true);
+    const [authChecked, setAuthChecked] = useState(false);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            await dispatch(checkAuthState());
+        };
+        checkAuth();
+
+        const timer = setTimeout(() => {
+            setShowSplash(false);
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [dispatch]);
+
+    // Debug: Log the user value
+    console.log('MainNavigator user:', user);
+
+    if (showSplash) {
+        return <SplashScreen />;
+    }
+
+    return (
+        <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                {!isAuthenticated ? (
+                    <>
+                        <Stack.Screen name="Login" component={LoginScreen} />
+                    </>
+                ) : (
+                    <>
+                        <Stack.Screen name="Main" component={TabNavigator} />
+                        <Stack.Screen name="TaskDetail" component={TaskDetail} />
+                        <Stack.Screen name="MaterialUsage" component={MaterialUsageScreen} />
+                        <Stack.Screen name="EditProfile" component={EditProfile} />
+                    </>
+                )}
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
+};
+
+export default MainNavigator;

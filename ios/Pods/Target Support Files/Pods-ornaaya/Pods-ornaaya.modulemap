@@ -1,0 +1,6 @@
+module Pods_ornaaya {
+  umbrella header "Pods-ornaaya-umbrella.h"
+
+  export *
+  module * { export * }
+}

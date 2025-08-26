@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build output
+android/app/build/
+ios/build/
+# Exclude all build folders recursively
+**/build/
+
+# Temp files
+temp/
+
+# IDE files
+.vscode/
+.idea/
+
+# React Native
+.expo/
+.expo-shared/
+
+# Misc
+.env
+*.keystore
