@@ -19,6 +19,7 @@ import * as ImagePicker from 'react-native-image-picker';
 import { apiGet, apiPost, apiPut } from '../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import socketService from '../services/socketService';
 
 const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
     const [messages, setMessages] = useState([]);
@@ -29,15 +30,118 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [imageModalVisible, setImageModalVisible] = useState(false);
     const [viewImageUrl, setViewImageUrl] = useState(null);
+    const [typingUsers, setTypingUsers] = useState({});
+    const [isConnected, setIsConnected] = useState(false);
     const flatListRef = useRef(null);
     const [userId, setUserId] = useState(null);
+    const [userName, setUserName] = useState('');
+    const typingTimeoutRef = useRef(null);
 
     useEffect(() => {
-        getUserInfo();
-        fetchMessages();
-        // Poll for new messages every 30 seconds instead of 10
-        const interval = setInterval(fetchMessages, 30000);
-        return () => clearInterval(interval);
+        let mounted = true;
+
+        const initializeChat = async () => {
+            await getUserInfo();
+            await fetchMessages();
+            
+            // Connect to socket
+            console.log('Initializing socket connection...');
+            const connected = await socketService.connect();
+            console.log('Socket connection result:', connected);
+            
+            if (connected && mounted) {
+                setIsConnected(true);
+                
+                // Remove any existing listeners first
+                socketService.removeAllListeners();
+                
+                // Set up socket event listeners BEFORE joining room
+                socketService.onNewMessage((message) => {
+                    console.log('Received new message via socket:', message);
+                    if (mounted && message) {
+                        setMessages(prev => {
+                            console.log('Previous messages:', prev.length);
+                            // Check if message already exists to avoid duplicates
+                            const exists = prev.some(m => 
+                                m.id === message.id || 
+                                (m.message === message.message && 
+                                 m.sender_id === message.sender_id && 
+                                 Math.abs(new Date(m.created_at) - new Date(message.created_at)) < 1000)
+                            );
+                            
+                            if (exists) {
+                                console.log('Message already exists, skipping');
+                                return prev;
+                            }
+                            
+                            const updated = [...prev, message];
+                            console.log('Updated messages:', updated.length);
+                            return updated;
+                        });
+                        // Auto-scroll to bottom for new messages
+                        setTimeout(() => {
+                            flatListRef.current?.scrollToEnd({ animated: true });
+                        }, 100);
+                    }
+                });
+
+                socketService.onUserTyping(({ userId, userName, isTyping }) => {
+                    if (mounted) {
+                        setTypingUsers(prev => ({
+                            ...prev,
+                            [userId]: isTyping ? userName : undefined
+                        }));
+                        
+                        // Remove typing indicator after 3 seconds
+                        if (isTyping) {
+                            setTimeout(() => {
+                                setTypingUsers(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[userId];
+                                    return updated;
+                                });
+                            }, 3000);
+                        }
+                    }
+                });
+
+                socketService.onMessagesRead(({ orderId: readOrderId, userId: readUserId }) => {
+                    if (mounted && readOrderId === orderId) {
+                        // Update read status for messages from this user
+                        setMessages(prev => prev.map(msg => 
+                            msg.sender_id === readUserId ? { ...msg, is_read: true } : msg
+                        ));
+                    }
+                });
+
+                socketService.onMessageError(({ error }) => {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Message Error',
+                        text2: error
+                    });
+                });
+                
+                // Join the room AFTER setting up listeners
+                console.log('Joining order chat room:', orderId);
+                socketService.joinOrderChat(orderId);
+                
+            } else if (!connected) {
+                console.error('Failed to connect to socket');
+                setIsConnected(false);
+            }
+        };
+
+        initializeChat();
+
+        return () => {
+            mounted = false;
+            socketService.leaveOrderChat(orderId);
+            socketService.removeAllListeners();
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+        };
     }, [orderId]);
 
     const getUserInfo = async () => {
@@ -46,6 +150,7 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
             if (userStr) {
                 const user = JSON.parse(userStr);
                 setUserId(user.id || user.user_id);
+                setUserName(`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User');
             }
         } catch (error) {
             console.error('Error getting user info:', error);
@@ -57,8 +162,12 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
             const response = await apiGet(`comments/order/${orderId}`);
             if (response && response.ok && response.data) {
                 setMessages(response.data.data || response.data || []);
-                // Mark messages as read using PUT instead of POST
-                await apiPut(`comments/order/${orderId}/read`);
+                // Mark messages as read
+                if (isConnected) {
+                    socketService.markAsRead(orderId);
+                } else {
+                    await apiPut(`comments/order/${orderId}/read`);
+                }
             }
         } catch (error) {
             console.error('Error fetching messages:', error);
@@ -80,33 +189,46 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
 
         setSending(true);
         try {
-            const formData = new FormData();
-            formData.append('message', newMessage.trim());
-            
-            if (selectedImage) {
-                formData.append('image', {
-                    uri: selectedImage.uri,
-                    type: selectedImage.type || 'image/jpeg',
-                    name: selectedImage.fileName || 'photo.jpg',
-                });
-            }
-
-            const response = await apiPost(`comments/order/${orderId}`, formData);
-            
-            if (response && response.ok) {
+            // If connected via socket, use socket for real-time messaging
+            if (isConnected && !selectedImage) {
+                console.log('Sending message via socket:', newMessage.trim());
+                socketService.sendMessage(orderId, newMessage.trim());
                 setNewMessage('');
-                setSelectedImage(null);
-                await fetchMessages();
-                // Scroll to bottom after sending
-                setTimeout(() => {
-                    flatListRef.current?.scrollToEnd({ animated: true });
-                }, 100);
+                setSending(false); // Reset sending state immediately for socket
+                // Message will be added to the list via socket event
+                return; // Exit early for socket messages
             } else {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Failed to send message',
-                    text2: 'Please try again',
-                });
+                // Fall back to HTTP API if not connected or if sending image
+                const formData = new FormData();
+                formData.append('message', newMessage.trim());
+                
+                if (selectedImage) {
+                    formData.append('image', {
+                        uri: selectedImage.uri,
+                        type: selectedImage.type || 'image/jpeg',
+                        name: selectedImage.fileName || 'photo.jpg',
+                    });
+                }
+
+                const response = await apiPost(`comments/order/${orderId}`, formData);
+                
+                if (response && response.ok) {
+                    setNewMessage('');
+                    setSelectedImage(null);
+                    if (!isConnected) {
+                        await fetchMessages();
+                    }
+                    // Scroll to bottom after sending
+                    setTimeout(() => {
+                        flatListRef.current?.scrollToEnd({ animated: true });
+                    }, 100);
+                } else {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Failed to send message',
+                        text2: 'Please try again',
+                    });
+                }
             }
         } catch (error) {
             console.error('Error sending message:', error);
@@ -349,7 +471,18 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
                 </View>
             )}
             
+            {/* Typing Indicator */}
+            {Object.keys(typingUsers).length > 0 && (
+                <View style={styles.typingIndicator}>
+                    <Text style={styles.typingText}>
+                        {Object.values(typingUsers).filter(Boolean).join(', ')} {Object.keys(typingUsers).length === 1 ? 'is' : 'are'} typing...
+                    </Text>
+                </View>
+            )}
+            
             <View style={styles.inputContainer}>
+                {/* Connection Status Indicator */}
+                <View style={[styles.connectionIndicator, { backgroundColor: isConnected ? '#10B981' : '#EF4444' }]} />
                 <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
                     <Icon name="paperclip" size={22} color="#6B7280" />
                 </TouchableOpacity>
@@ -359,7 +492,19 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
                     placeholder="Type a message..."
                     placeholderTextColor="#9CA3AF"
                     value={newMessage}
-                    onChangeText={setNewMessage}
+                    onChangeText={(text) => {
+                        setNewMessage(text);
+                        // Handle typing indicator
+                        if (isConnected && text.length > 0) {
+                            if (typingTimeoutRef.current) {
+                                clearTimeout(typingTimeoutRef.current);
+                            }
+                            socketService.startTyping(orderId, userName);
+                            typingTimeoutRef.current = setTimeout(() => {
+                                socketService.stopTyping(orderId);
+                            }, 1000);
+                        }
+                    }}
                     multiline
                     maxHeight={100}
                 />
@@ -607,6 +752,25 @@ const styles = StyleSheet.create({
     fullScreenImage: {
         width: '100%',
         height: '80%',
+    },
+    typingIndicator: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        backgroundColor: '#F9FAFB',
+    },
+    typingText: {
+        fontSize: 12,
+        color: '#6B7280',
+        fontStyle: 'italic',
+    },
+    connectionIndicator: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        marginRight: 8,
+        position: 'absolute',
+        top: 26,
+        left: 8,
     },
 });
 
