@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     ScrollView,
     TouchableOpacity,
     SafeAreaView,
@@ -18,7 +17,6 @@ import {
     FlatList
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import Icon2 from 'react-native-vector-icons/FontAwesome';
 
 import TaskProgressBar from '../../components/ui/TaskProgressBar';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,6 +25,7 @@ import { fetchTaskDetails, updateTaskStatus, addTaskUpdate } from '../../store/s
 import TopBar from '../../components/ui/TopBar';
 import EditTask from './EditTask';
 import TaskComplete from './TaskComplete';
+import OrderChat from '../../components/OrderChat';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -740,77 +739,13 @@ const TaskDetail = () => {
                     </View>
                 </View>
 
-                <View style={[styles.card, { padding: 0 }]}>
-                    <Text style={[styles.sectionTitle, { marginLeft: 16, }]}>Comments & Updates</Text>
-
-                    <View style={[styles.scrollContainer, { maxHeight: 300, }]}>
-                        <ScrollView >
-                            {(currentItem.order_updates || currentItem.repair_updates || []).map((update, index) => {
-                                const isUser = index % 2 !== 0; // Replace with actual logic
-                                const message = update.notes || update.process?.join(', ') || 'No updates';
-
-                                return (
-                                    <View
-                                        key={index}
-                                        style={[
-                                            styles.chatMessageWrapper,
-                                            isUser ? styles.alignRight : styles.alignLeft
-                                        ]}
-                                    >
-                                        {!isUser && (
-                                            <View style={styles.avatar}>
-                                                <Icon2 name="user-circle" size={24} color="#6B7280" />
-                                            </View>
-                                        )}
-
-                                        <View
-                                            style={[
-                                                styles.chatBubble,
-                                                isUser ? styles.userBubble : styles.otherBubble
-                                            ]}
-                                        >
-                                            <Text style={isUser ? styles.chatTextUser : styles.chatTextOther}>
-                                                {message}
-                                            </Text>
-                                            <Text style={styles.chatMeta}>
-                                                {new Date(update.created_at).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
-                                            </Text>
-                                        </View>
-
-                                        {isUser && (
-                                            <View style={styles.avatar}>
-                                                <Icon2 name="user-circle" size={24} color="#6B7280" />
-                                            </View>
-                                        )}
-                                    </View>
-                                );
-                            })}
-
-                            {(!(currentItem.order_updates || currentItem.repair_updates) ||
-                                (currentItem.order_updates || currentItem.repair_updates || []).length === 0) && (
-                                    <View style={styles.noDataContainer}>
-                                        <Text style={styles.noDataText}>No updates available</Text>
-                                    </View>
-                                )}
-                        </ScrollView>
-                    </View>
-
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            placeholder="Add a comment"
-                            placeholderTextColor="#6B7280"
-                            style={styles.input}
-                            accessibilityLabel="Add a comment"
+                <View style={[styles.card, { padding: 0, paddingTop: 16 }]}>
+                    <Text style={[styles.sectionTitle, { marginLeft: 16, marginBottom: 16 }]}>Comments & Messages</Text>
+                    <View style={{ height: 400 }}>
+                        <OrderChat 
+                            orderId={currentItem?.order_id || currentItem?.repair_id || currentItem?.id || taskId}
+                            currentUserType="manufacture"
                         />
-                        <TouchableOpacity accessibilityLabel="Attach image" style={styles.iconButton}>
-                            <Icon name="camera" size={18} color="#6B7280" />
-                        </TouchableOpacity>
-                        <TouchableOpacity accessibilityLabel="Send comment" style={styles.iconButton}>
-                            <Icon name="send" size={18} color="#1E40AF" />
-                        </TouchableOpacity>
                     </View>
                 </View>
 
