@@ -7,10 +7,10 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
-    Alert,
     Dimensions,
     Platform,
     SafeAreaView,
+    Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,7 +21,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { createCommonStyles } from '../../utils/commonStyles';
 import Toast from 'react-native-toast-message';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
     const dispatch = useDispatch();
@@ -36,19 +36,47 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
     const [availableProcesses, setAvailableProcesses] = useState([]);
     const [backendCompletedProcesses, setBackendCompletedProcesses] = useState([]); // Track original backend completed steps
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Confirmation modal states
+    const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+    const [confirmModalConfig, setConfirmModalConfig] = useState({
+        title: '',
+        message: '',
+        onConfirm: null,
+        confirmText: 'Confirm',
+        cancelText: 'Cancel',
+    });
+
+    // Helper function to show confirmation modal
+    const showConfirmModal = (title, message, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel') => {
+        setConfirmModalConfig({
+            title,
+            message,
+            onConfirm,
+            confirmText,
+            cancelText,
+        });
+        setConfirmModalVisible(true);
+    };
+
+    const handleConfirmModalAction = (confirmed) => {
+        setConfirmModalVisible(false);
+        if (confirmed && confirmModalConfig.onConfirm) {
+            confirmModalConfig.onConfirm();
+        }
+    };
 
     useEffect(() => {
         if (task) {
             console.log('EditTask received task:', task);
             setTaskName(task.title || task.product || '');
 
-            // Initialize used materials from backend data
-            // Users can only update quantities of existing materials, not add/remove them
+            // Initialize materials based on assigned materials and last updates
+            let assignedMaterials = task.assigned_materials || task.materials || [];
             let lastUpdateMaterials = [];
-            let originalMaterials = task.materials || [];
 
             if (isRepair) {
-                // For repairs, get materials from the latest repair_update or original materials
+                // For repairs, get materials from the latest repair_update
                 const latestUpdate = task.repair_updates && task.repair_updates.length > 0 
                     ? task.repair_updates[task.repair_updates.length - 1] 
                     : null;
@@ -58,36 +86,35 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
                 lastUpdateMaterials = task.last_update?.materials || [];
             }
 
-            // If there's a last update, show those materials, otherwise show original materials
-            const materialsToShow = lastUpdateMaterials.length > 0 ? lastUpdateMaterials : originalMaterials;
-
-            // Store original quantities to prevent reduction
-            const originalQuantities = {};
-            materialsToShow.forEach(material => {
-                originalQuantities[material.material_id || material.id] = parseFloat(material.quantity) || 0;
+            // Create a map of last used quantities for quick lookup
+            const lastUsedQuantities = {};
+            lastUpdateMaterials.forEach(material => {
+                lastUsedQuantities[material.material_id || material.id] = parseFloat(material.quantity) || 0;
             });
-            setOriginalMaterialQuantities(originalQuantities);
 
-            setUsedMaterials(materialsToShow.map(material => {
-                console.log('Processing material:', material); // Debug log to see material structure
+            // Store minimum quantities to prevent reduction (last used quantities)
+            setOriginalMaterialQuantities(lastUsedQuantities);
 
-                // Try to find material name from assigned_materials if available
-                let materialName = material.material_name || material.name || material.materialName;
+            // Initialize materials from assigned materials, with used quantities
+            setUsedMaterials(assignedMaterials.map(assignedMaterial => {
+                const materialId = assignedMaterial.material_id || assignedMaterial.id;
+                const materialName = assignedMaterial.material_name || assignedMaterial.material || assignedMaterial.name;
+                const assignedQuantity = parseFloat(assignedMaterial.quantity) || 0;
+                const unit = assignedMaterial.unit || 'g';
+                
+                // Get the last used quantity for this material (or 0 if not used yet)
+                const lastUsedQuantity = lastUsedQuantities[materialId] || 0;
 
-                if (!materialName && task.assigned_materials) {
-                    const assignedMaterial = task.assigned_materials.find(
-                        am => am.material_id === (material.material_id || material.id)
-                    );
-                    materialName = assignedMaterial?.material_name;
-                }
+                console.log(`Material ${materialName}: Assigned=${assignedQuantity}, LastUsed=${lastUsedQuantity}`);
 
                 return {
-                    material_id: material.material_id || material.id || 1,
-                    quantity: material.quantity?.toString() || '',
-                    unit: material.unit || 'g',
-                    name: materialName || `Material ID: ${material.material_id || material.id}`
+                    material_id: materialId,
+                    quantity: lastUsedQuantity.toString(), // Start with last used quantity (0 if never used)
+                    assignedQuantity: assignedQuantity, // Store assigned quantity for validation
+                    unit: unit,
+                    name: materialName || `Material ID: ${materialId}`
                 };
-            }) || [{ material_id: 1, quantity: '', unit: 'g', name: 'Gold' }]);
+            }) || []);
 
             // Get available process steps
             let processSteps;
@@ -220,12 +247,18 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
             return;
         }
 
-        // If user clicks on a forward step, auto-select all steps up to that point
-        // But preserve backend completed steps and only add new ones
-        const allStepsUpToClicked = availableProcesses.slice(0, processIndex + 1);
-        console.log('Auto-selecting all steps up to:', processName);
-        console.log('New completed processes:', allStepsUpToClicked);
-        setCompletedProcesses(allStepsUpToClicked);
+        // Show confirmation before updating process step
+        showConfirmModal(
+            'Confirm Process Update',
+            `Are you sure you want to mark "${processName}" as completed? This action cannot be undone.`,
+            () => {
+                // If user clicks on a forward step, auto-select all steps up to that point
+                const allStepsUpToClicked = availableProcesses.slice(0, processIndex + 1);
+                console.log('Auto-selecting all steps up to:', processName);
+                console.log('New completed processes:', allStepsUpToClicked);
+                setCompletedProcesses(allStepsUpToClicked);
+            }
+        );
     };
 
     // Helper function to determine if a process should be visually highlighted as current
@@ -252,44 +285,51 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
 
     const handleSave = async () => {
         // Show confirmation popup before proceeding
-        Alert.alert(
+        showConfirmModal(
             'Confirm Update',
             isRepair 
                 ? 'Are you sure you want to update this repair with the current materials and process steps?'
                 : 'Are you sure you want to update this task with the current materials and process steps?',
-            [
-                {
-                    text: 'Cancel',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Update',
-                    style: 'default',
-                    onPress: () => performSave(),
-                },
-            ],
-            { cancelable: true }
+            () => performSave(),
+            'Update',
+            'Cancel'
         );
     };
 
     const performSave = async () => {
 
-        // Validate materials: ensure no quantity is less than original, and all are positive numbers
+        // Validate materials: ensure quantities are valid
         const validMaterials = usedMaterials.filter(material =>
-            material.quantity && parseFloat(material.quantity) > 0
+            material.quantity && parseFloat(material.quantity) >= 0
         );
 
-        // Check for any material quantity less than original
+        // Validate each material quantity
         for (let i = 0; i < usedMaterials.length; i++) {
             const material = usedMaterials[i];
             const materialId = material.material_id;
             const originalQuantity = originalMaterialQuantities[materialId] || 0;
-            const newQuantity = parseFloat(material.quantity);
-            if (!isNaN(newQuantity) && newQuantity < originalQuantity) {
+            const assignedQuantity = material.assignedQuantity || 0;
+            const newQuantity = parseFloat(material.quantity) || 0;
+            
+            // Check if quantity is less than previously used amount
+            if (newQuantity < originalQuantity) {
                 Toast.show({
                     type: 'error',
                     text1: '❌ Cannot Reduce Quantity',
-                    text2: `Material usage for ${material.name} can only increase. Minimum: ${originalQuantity} ${material.unit}`,
+                    text2: `Material usage for ${material.name} cannot be reduced. Minimum: ${originalQuantity} ${material.unit}`,
+                    visibilityTime: 3000,
+                    position: 'top',
+                    topOffset: 60,
+                });
+                return;
+            }
+            
+            // Check if quantity exceeds assigned amount
+            if (newQuantity > assignedQuantity) {
+                Toast.show({
+                    type: 'error',
+                    text1: '❌ Exceeds Assigned Quantity',
+                    text2: `Cannot use more than assigned for ${material.name}. Maximum: ${assignedQuantity} ${material.unit}`,
                     visibilityTime: 3000,
                     position: 'top',
                     topOffset: 60,
@@ -299,7 +339,14 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
         }
 
         if (validMaterials.length === 0) {
-            Alert.alert('Error', 'Please add at least one material with quantity');
+            Toast.show({
+                type: 'error',
+                text1: '❌ No Materials',
+                text2: 'Please add at least one material with quantity',
+                visibilityTime: 3000,
+                position: 'top',
+                topOffset: 60,
+            });
             return;
         }
 
@@ -453,11 +500,16 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
                             <View key={index} style={styles.materialRow}>
                                 <View style={styles.materialNameContainer}>
                                     <Text style={styles.materialLabel}>{material.name || `Material ID: ${material.material_id}`}</Text>
-                                    {originalQuantity > 0 && (
-                                        <Text style={styles.materialMinQuantity}>
-                                            Min: {originalQuantity} {material.unit}
+                                    <View style={styles.materialLimitsContainer}>
+                                        {originalQuantity > 0 && (
+                                            <Text style={styles.materialMinQuantity}>
+                                                Min: {originalQuantity} {material.unit}
+                                            </Text>
+                                        )}
+                                        <Text style={styles.materialMaxQuantity}>
+                                            Max: {material.assignedQuantity || 0} {material.unit}
                                         </Text>
-                                    )}
+                                    </View>
                                 </View>
                                 <TextInput
                                     style={[styles.input, styles.quantityInput]}
@@ -574,6 +626,38 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
                 </View>
                 )}
             </ScrollView>
+
+            {/* Custom Confirmation Modal */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={confirmModalVisible}
+                onRequestClose={() => setConfirmModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalHeader}>
+                            <Icon name="alert-circle" size={24} color="#007BFF" />
+                            <Text style={styles.modalTitle}>{confirmModalConfig.title}</Text>
+                        </View>
+                        <Text style={styles.modalMessage}>{confirmModalConfig.message}</Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={styles.modalCancelButton}
+                                onPress={() => handleConfirmModalAction(false)}
+                            >
+                                <Text style={styles.modalCancelText}>{confirmModalConfig.cancelText}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.modalConfirmButton}
+                                onPress={() => handleConfirmModalAction(true)}
+                            >
+                                <Text style={styles.modalConfirmText}>{confirmModalConfig.confirmText}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Footer Buttons */}
             <View style={styles.footer}>
@@ -712,9 +796,20 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#374151',
     },
+    materialLimitsContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 2,
+    },
     materialMinQuantity: {
         fontSize: 10,
-        color: '#6B7280',
+        color: '#DC2626',
+        fontStyle: 'italic',
+        marginTop: 2,
+    },
+    materialMaxQuantity: {
+        fontSize: 10,
+        color: '#059669',
         fontStyle: 'italic',
         marginTop: 2,
     },
@@ -984,6 +1079,83 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         fontSize: 16,
         // marginLeft: 6,
+    },
+    
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 20,
+        width: screenWidth * 0.85,
+        maxWidth: 400,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 12,
+            },
+            android: {
+                elevation: 8,
+            },
+        }),
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+        gap: 8,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1A1A1A',
+        flex: 1,
+    },
+    modalMessage: {
+        fontSize: 14,
+        color: '#6B7280',
+        lineHeight: 20,
+        marginBottom: 20,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 12,
+    },
+    modalCancelButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        backgroundColor: '#FFFFFF',
+        minWidth: 80,
+        alignItems: 'center',
+    },
+    modalCancelText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#6B7280',
+    },
+    modalConfirmButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        backgroundColor: '#007BFF',
+        minWidth: 80,
+        alignItems: 'center',
+    },
+    modalConfirmText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#FFFFFF',
     },
 });
 

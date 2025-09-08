@@ -9,6 +9,7 @@ import TabNavigator from './TabNavigator';
 import TaskDetail from '../screens/tasks/TaskDetail';
 import MaterialUsageScreen from '../components/MaterialUsage';
 import EditProfile from '../screens/setting/EditProfile';
+import ApiTestScreen from '../screens/ApiTestScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +52,7 @@ const MainNavigator = () => {
                         <Stack.Screen name="TaskDetail" component={TaskDetail} />
                         <Stack.Screen name="MaterialUsage" component={MaterialUsageScreen} />
                         <Stack.Screen name="EditProfile" component={EditProfile} />
+                        <Stack.Screen name="ApiTest" component={ApiTestScreen} />
                     </>
                 )}
             </Stack.Navigator>

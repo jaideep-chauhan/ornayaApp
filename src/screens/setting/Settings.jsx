@@ -255,6 +255,15 @@ const Settings = () => {
                     }
                 />
 
+                {/* Developer Tools */}
+                <SectionHeader title="Developer Tools" icon="code" />
+                <SettingsItem
+                    icon="vial"
+                    label="API Test Suite"
+                    subtitle="Test all API endpoints"
+                    onPress={() => navigation.navigate('ApiTest')}
+                />
+
                 {/* Support & Info */}
                 <SectionHeader title="Support & Information" icon="info-circle" />
                 <SettingsItem

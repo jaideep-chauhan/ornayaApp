@@ -41,6 +41,10 @@ const AgendaCard = ({ item, navigation }) => {
         return null; // Skip rendering if any required property is missing
     }
 
+    // Debug: Log the item to see what data we're receiving
+    console.log('AgendaCard item:', JSON.stringify(item, null, 2));
+    console.log('Description value:', item.description);
+
     // Determine if this is a repair or task based on the ID format
     const isRepair = item.id && (item.id.toString().includes('R') || item.originalType === 'repair');
 
@@ -63,6 +67,17 @@ const AgendaCard = ({ item, navigation }) => {
                 <Text style={styles.agendaDate}>{item.date}</Text>
             </View>
             <Text style={styles.agendaId}>#{item.id}</Text>
+            {item.description ? (
+                <Text 
+                    style={styles.agendaDescription} 
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                >
+                    {item.description}
+                </Text>
+            ) : (
+                <Text style={styles.agendaDescription}>No description available</Text>
+            )}
             <Text style={styles.dueText}>📅 Due: {item.due}</Text>
             <View style={styles.agendaActions}>
                 <StatusBadge status={item.status} />
@@ -105,16 +120,19 @@ const UserDashboard = () => {
         setActiveSlide(slide);
     };
 
-    const handleMaterialPress = (index) => {
-        if (index === 1) {
+    const handleMaterialPress = (materialData) => {
+        if (materialData) {
             navigation.navigate('MaterialUsage', {
-                material: 'Gold',
-                issued: '128.75',
-                used: '97.20',
-                remaining: '31.55',
+                materialId: materialData.materialId,
+                material: materialData.materialName,
+                issued: materialData.quantity.toString(),
+                used: materialData.usedQuantity.toString(),
+                remaining: materialData.remainingQuantity.toString(),
+                unit: materialData.unit,
+                usagePercentage: materialData.usagePercentage,
                 taskBreakdown: [
-                    { id: '#T987430', description: 'Gold Pendant Crafting', status: 'In progress', amount: 5.25 },
-                    { id: '#T987431', description: 'Gold Ring Polishing', status: 'Completed', amount: 3.25 },
+                    { id: '#T987430', description: `${materialData.materialName} Pendant Crafting`, status: 'In progress', amount: 5.25 },
+                    { id: '#T987431', description: `${materialData.materialName} Ring Polishing`, status: 'Completed', amount: 3.25 },
                 ],
             });
         }
@@ -126,6 +144,35 @@ const UserDashboard = () => {
         } else if (label === 'Total Repairs') {
             navigation.navigate('RepairList');
         }
+    };
+
+    // Generate material items from API data
+    const generateMaterialItems = () => {
+        const materials = dashboardData?.materialAssigned || [];
+        const materialColors = [
+            { bgColor: '#E6F0FF', color: '#005AA9' },
+            { bgColor: '#FFEDE0', color: '#FF9142' },
+            { bgColor: '#E0F8FF', color: '#B58B00' },
+            { bgColor: '#F0E6FF', color: '#7B2D8E' },
+            { bgColor: '#E6FFE6', color: '#2D8E2D' }
+        ];
+        
+        const materialIcons = {
+            'Gold': 'gold',
+            'Silver': 'silverware-fork-knife',
+            'Platinum': 'diamond-stone',
+            'Copper': 'circle-outline',
+            'Diamond': 'diamond'
+        };
+
+        return materials.map((material, index) => ({
+            label: material.materialName,
+            value: `${material.quantity}${material.unit}`,
+            bgColor: materialColors[index % materialColors.length].bgColor,
+            color: materialColors[index % materialColors.length].color,
+            icon: materialIcons[material.materialName] || 'circle-outline',
+            materialData: material
+        }));
     };
 
     // Use API data if available, otherwise fall back to static data
@@ -142,49 +189,57 @@ const UserDashboard = () => {
         {
             id: '2',
             title: `Material Issued`,
-            items: [
-                { label: 'Gold', value: '128.75g', bgColor: '#E6F0FF', color: '#005AA9', icon: 'gold' },
-                { label: 'Platinum', value: '97.20g', bgColor: '#FFEDE0', color: '#FF9142', icon: 'diamond-stone' },
-                { label: 'Silver', value: '31.55g', bgColor: '#E0F8FF', color: '#B58B00', icon: 'silverware-fork-knife' },
-            ],
+            items: generateMaterialItems(),
         }
     ];
 
-    // Format the agenda items from dashboardData
-    const displayAgendaItems = [
+    // Debug: Log the raw dashboard data
+    console.log('Dashboard Data - Today Tasks:', JSON.stringify(dashboardData.todayTasks, null, 2));
+    console.log('Dashboard Data - Today Repairs:', JSON.stringify(dashboardData.todayRepairs, null, 2));
+
+    // Format today's items
+    const todayAgendaItems = [
         ...dashboardData.todayTasks.map(task => ({
             title: task.title,
             id: task.orderId,
+            description: task.description || '',
             // Convert date strings to Date objects for formatting only at display time
             date: task.createdAt ? new Date(parseInt(task.createdAt)).toLocaleDateString() : 'N/A',
             due: task.deadline ? new Date(parseInt(task.deadline)).toLocaleDateString() : 'N/A',
             status: task.status,
             originalType: 'task'
         })),
+        ...dashboardData.todayRepairs.map(repair => ({
+            title: repair.product,
+            id: repair.repairId,
+            description: repair.description || '',
+            date: repair.createdAt ? new Date(parseInt(repair.createdAt)).toLocaleDateString() : 'N/A',
+            due: repair.deadline ? new Date(parseInt(repair.deadline)).toLocaleDateString() : 'N/A',
+            status: repair.status,
+            originalType: 'repair'
+        }))
+    ];
+
+    // Format this week's items
+    const weekAgendaItems = [
         ...dashboardData.weekTasks.map(task => ({
             title: task.title,
             id: task.orderId,
+            description: task.description || '',
             date: task.createdAt ? new Date(parseInt(task.createdAt)).toLocaleDateString() : 'N/A',
             due: 'N/A',
             status: task.status,
             originalType: 'task'
         })),
-        ...dashboardData.todayRepairs.map(repair => ({
-            title: repair.product,
-            id: repair.repairId,
-            date: repair.createdAt ? new Date(parseInt(repair.createdAt)).toLocaleDateString() : 'N/A',
-            due: repair.deadline ? new Date(parseInt(repair.deadline)).toLocaleDateString() : 'N/A',
-            status: repair.status,
-            originalType: 'repair'
-        })),
         ...dashboardData.weekRepairs.map(repair => ({
             title: repair.product,
             id: repair.repairId,
+            description: repair.description || '',
             date: repair.createdAt ? new Date(parseInt(repair.createdAt)).toLocaleDateString() : 'N/A',
             due: 'N/A',
             status: repair.status,
             originalType: 'repair'
-        })),
+        }))
     ];
 
     if (loading && !dashboardData) {
@@ -236,10 +291,10 @@ const UserDashboard = () => {
                                         key={idx}
                                         style={[styles.cardItem, { backgroundColor: info.bgColor }]}
                                         onPress={() => {
-                                            if (info.label === 'Total Orders' || info.label === 'Total Repairs') {
+                                            if (info.label === 'Total Tasks' || info.label === 'Product Repairs' || info.label === 'New Product') {
                                                 handleSummaryCardPress(info.label);
-                                            } else {
-                                                handleMaterialPress(idx);
+                                            } else if (info.materialData) {
+                                                handleMaterialPress(info.materialData);
                                             }
                                         }}
                                     >
@@ -268,16 +323,18 @@ const UserDashboard = () => {
                 </View>
 
                 <Text style={styles.sectionTitle}>Today</Text>
-                {displayAgendaItems.length > 0 ? (
-                    <AgendaCard item={displayAgendaItems[0]} navigation={navigation} />
+                {todayAgendaItems.length > 0 ? (
+                    todayAgendaItems.filter(item => item && item.title).map((item, i) => (
+                        <AgendaCard item={item} key={`today-${i}`} navigation={navigation} />
+                    ))
                 ) : (
                     <Text style={styles.emptyMessage}>No orders or repairs for today</Text>
                 )}
 
                 <Text style={styles.sectionTitle}>This week agenda</Text>
-                {displayAgendaItems.length > 1 ? (
-                    displayAgendaItems.filter(item => item && item.title).slice(1).map((item, i) => (
-                        <AgendaCard item={item} key={i} navigation={navigation} />
+                {weekAgendaItems.length > 0 ? (
+                    weekAgendaItems.filter(item => item && item.title).map((item, i) => (
+                        <AgendaCard item={item} key={`week-${i}`} navigation={navigation} />
                     ))
                 ) : (
                     <Text style={styles.emptyMessage}>No upcoming orders or repairs this week</Text>
@@ -413,6 +470,13 @@ const styles = StyleSheet.create({
     agendaTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A1A' },
     agendaDate: { fontSize: 14, fontWeight: '400', color: '#878787' },
     agendaId: { fontSize: 12, color: '#0067C8', marginVertical: 4, fontWeight: '400' },
+    agendaDescription: { 
+        fontSize: 14, 
+        fontWeight: '400', 
+        color: '#666666', 
+        marginTop: 4,
+        lineHeight: 20,
+    },
     dueText: { fontSize: 14, fontWeight: 400, color: '#D10000', marginTop: 4, },
     agendaActions: {
         marginTop: 10,

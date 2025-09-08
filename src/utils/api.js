@@ -3,7 +3,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-const BASE_URL = 'https://api.ornaaya.com/api/';
+// For testing with local backend, use your computer's IP address
+// const BASE_URL = 'https://api.ornaaya.com/api/';
+
+// Determine the correct URL based on platform
+import { Platform } from 'react-native';
+
+const BASE_URL = Platform.select({
+    ios: 'http://localhost:3000/api/',         // iOS simulator
+    android: 'http://10.0.2.2:3000/api/',      // Android emulator
+    default: 'http://localhost:3000/api/'
+});
+
+console.log('Using API BASE_URL:', BASE_URL);
+
+// For physical devices, use your computer's IP address:
+// const BASE_URL = 'http://192.168.1.XXX:3000/api/';
 
 async function getAccessToken() {
     const raw = await AsyncStorage.getItem('token');

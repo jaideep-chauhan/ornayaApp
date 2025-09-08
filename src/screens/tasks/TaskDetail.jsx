@@ -287,9 +287,15 @@ const TaskDetail = () => {
         );
     }
 
-    const createdDate = currentItem.created_at
+    // Debug: Log the currentItem to see what fields are available
+    console.log('=== TaskDetail Debug ===');
+    console.log('currentItem:', JSON.stringify(currentItem, null, 2));
+    console.log('created_at value:', currentItem?.created_at);
+    console.log('createdAt value:', currentItem?.createdAt);
+    
+    const createdDate = currentItem?.created_at
         ? formatTimestamp(currentItem.created_at)
-        : currentItem.createdAt
+        : currentItem?.createdAt
             ? formatTimestamp(currentItem.createdAt)
             : 'Not Available';
 
@@ -850,7 +856,7 @@ const TaskDetail = () => {
                 animationType="slide"
                 onRequestClose={closeEditPopup}
             >
-                <View style={[styles.fullScreenModal, { zIndex: 10000, elevation: 10000, borderWidth: 2, borderColor: 'red' }]}>
+                <View style={[styles.fullScreenModal, { zIndex: 10000, elevation: 10000 }]}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>
                             Edit {isRepairDetail ? 'Repair' : 'Manufacturing Order'}

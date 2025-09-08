@@ -10,6 +10,7 @@ export const fetchDashboardData = createAsyncThunk(
             const response = await apiGet('manufacture/mainPage/data');
             if (response.ok) {
                 return response.data.data;
+                console.log("response data dashboard", response.data.data);
             } else {
                 Toast.show({
                     type: 'error',
@@ -34,7 +35,8 @@ const initialState = {
         todayTasks: [],
         todayRepairs: [],
         weekTasks: [],
-        weekRepairs: []
+        weekRepairs: [],
+        materialAssigned: []
     },
     statistics: {
         totalTasks: 0,
@@ -83,6 +85,7 @@ const dashboardSlice = createSlice({
                         todayTasks: action.payload.today_tasks?.map(task => ({
                             orderId: task.order_id,
                             title: task.title,
+                            description: task.description,
                             status: task.status,
                             // Store dates as serializable strings instead of Date objects
                             createdAt: task.created_at ? task.created_at.toString() : null,
@@ -91,6 +94,7 @@ const dashboardSlice = createSlice({
                         todayRepairs: action.payload.today_repairs?.map(repair => ({
                             repairId: repair.repair_id,
                             product: repair.product,
+                            description: repair.description,
                             status: repair.status,
                             // Store dates as serializable strings instead of Date objects
                             createdAt: repair.created_at ? repair.created_at.toString() : null,
@@ -99,6 +103,7 @@ const dashboardSlice = createSlice({
                         weekTasks: action.payload.week_tasks?.map(task => ({
                             orderId: task.order_id,
                             title: task.title,
+                            description: task.description,
                             status: task.status,
                             // Store dates as serializable strings instead of Date objects
                             createdAt: task.created_at ? task.created_at.toString() : null,
@@ -106,9 +111,19 @@ const dashboardSlice = createSlice({
                         weekRepairs: action.payload.week_repairs?.map(repair => ({
                             repairId: repair.repair_id,
                             product: repair.product,
+                            description: repair.description,
                             status: repair.status,
                             // Store dates as serializable strings instead of Date objects
                             createdAt: repair.created_at ? repair.created_at.toString() : null,
+                        })) || [],
+                        materialAssigned: action.payload.material_assigned?.map(material => ({
+                            materialId: material.material_id,
+                            materialName: material.material_name,
+                            quantity: parseFloat(material.quantity),
+                            unit: material.unit,
+                            usedQuantity: parseFloat(material.used_quantity),
+                            remainingQuantity: parseFloat(material.remaining_quantity),
+                            usagePercentage: parseFloat(material.usage_percentage),
                         })) || [],
                     };
                 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -7,27 +7,117 @@ import {
     TouchableOpacity,
     SafeAreaView,
     Dimensions,
+    ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import TopBar from './ui/TopBar';
 import DonutChart from './DonutChart';
+import { apiGet } from '../utils/api';
+import Toast from 'react-native-toast-message';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const MaterialUsage = () => {
     const route = useRoute();
-    const { material, issued, used, remaining, taskBreakdown } = route.params;
+    const params = route.params;
+    
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [materialData, setMaterialData] = useState(null);
+    
+    // Use params data as initial values
+    const [material, setMaterial] = useState(params?.material || '');
+    const [issued, setIssued] = useState(params?.issued || '0');
+    const [used, setUsed] = useState(params?.used || '0');
+    const [remaining, setRemaining] = useState(params?.remaining || '0');
+    const [unit, setUnit] = useState(params?.unit || 'g');
+    const [taskBreakdown, setTaskBreakdown] = useState(params?.taskBreakdown || []);
+
+    const fetchMaterialUsage = async () => {
+        if (!params?.materialId) {
+            setLoading(false);
+            return;
+        }
+        
+        try {
+            const response = await apiGet(`manufacture/material-usage/${params.materialId}`);
+            if (response.ok && response.data?.data) {
+                const data = response.data.data;
+                setMaterialData(data);
+                
+                // Update state with API data
+                if (data.material_info) {
+                    setMaterial(data.material_info.material_name || params.material);
+                    setIssued(data.material_info.quantity?.toString() || params.issued);
+                    setUsed(data.material_info.used_quantity?.toString() || params.used);
+                    setRemaining(data.material_info.remaining_quantity?.toString() || params.remaining);
+                    setUnit(data.material_info.unit || params.unit || 'g');
+                }
+                
+                // Format task breakdown from API
+                if (data.usage_breakdown && Array.isArray(data.usage_breakdown)) {
+                    const formattedTasks = data.usage_breakdown.map((item, index) => ({
+                        id: item.order_id ? `#T${item.order_id}` : `#T${index}`,
+                        description: item.order_title || item.description || 'Task',
+                        status: item.status || 'pending',
+                        amount: parseFloat(item.quantity_used) || 0,
+                        orderId: item.order_id,
+                        createdAt: item.created_at,
+                    }));
+                    setTaskBreakdown(formattedTasks);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching material usage:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Failed to load material usage',
+                text2: 'Using cached data',
+            });
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMaterialUsage();
+    }, [params?.materialId]);
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        fetchMaterialUsage();
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.safe}>
+                <TopBar title="Material Usage" showBack={true} showNotification={true} />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#007BFF" />
+                    <Text style={styles.loadingText}>Loading material usage...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.safe}>
             <TopBar title="Material Usage" showBack={true} showNotification={true} />
 
-            <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                contentContainerStyle={styles.container} 
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+                }
+            >
                 {/* Summary Cards */}
                 <View style={styles.cardRow}>
-                    <InfoCard label={`${material} Issued`} value={`${issued}g`} color="#E6F0FF" />
-                    <InfoCard label={`${material} Used`} value={`${used}g`} color="#FFEDE0" />
-                    <InfoCard label={`${material} Remaining`} value={`${remaining}g`} color="#E0F8FF" />
+                    <InfoCard label={`${material} Issued`} value={`${issued}${unit}`} color="#E6F0FF" />
+                    <InfoCard label={`${material} Used`} value={`${used}${unit}`} color="#FFEDE0" />
+                    <InfoCard label={`${material} Remaining`} value={`${remaining}${unit}`} color="#E0F8FF" />
                 </View>
 
                 {/* Chart */}
@@ -44,7 +134,7 @@ const MaterialUsage = () => {
                 <Text style={styles.sectionTitle}>{material} Usage by Task</Text>
                 {taskBreakdown && taskBreakdown.length > 0 ? (
                     taskBreakdown.map((task, index) => (
-                        <TaskCard key={index} task={task} material={material} />
+                        <TaskCard key={index} task={task} material={material} unit={unit} />
                     ))
                 ) : (
                     <Text style={styles.noTaskText}>No task breakdown available.</Text>
@@ -91,14 +181,14 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const TaskCard = ({ task, material }) => (
+const TaskCard = ({ task, material, unit = 'g' }) => (
     <View style={styles.taskCard}>
         <View style={styles.taskTop}>
             <View>
                 <Text style={styles.taskId}>{task.id}</Text>
                 <Text style={styles.taskDesc}>{task.description}</Text>
             </View>
-            <Text style={styles.materialUsed}>{material} used: {task.amount}g</Text>
+            <Text style={styles.materialUsed}>{material} used: {task.amount}{unit}</Text>
         </View>
         <View style={styles.taskBottom}>
             <StatusBadge status={task.status} />
@@ -225,5 +315,16 @@ const styles = StyleSheet.create({
         color: '#888',
         marginVertical: 20,
         fontSize: 14,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 50,
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#666',
     },
 });
