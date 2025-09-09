@@ -474,7 +474,13 @@ const TaskDetail = () => {
                 showBack={true}
                 showNotification={true}
             />
-            <ScrollView contentContainerStyle={styles.container}>
+            <FlatList
+                data={[{ key: 'content' }]}
+                keyExtractor={(item) => item.key}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.container}
+                renderItem={() => (
+                    <>
                 <View style={styles.card}>
                     <View style={styles.rowBetween}>
                         <Text style={styles.label}>
@@ -739,18 +745,20 @@ const TaskDetail = () => {
                     </View>
                 </View>
 
-                <View style={[styles.card, { padding: 0, paddingTop: 16 }]}>
-                    <Text style={[styles.sectionTitle, { marginLeft: 16, marginBottom: 16 }]}>Comments & Messages</Text>
-                    <View style={{ height: 400 }}>
-                        <OrderChat 
-                            orderId={currentItem?.order_id || currentItem?.repair_id || currentItem?.id || taskId}
-                            currentUserType="manufacture"
-                        />
+                    </>
+                )}
+                ListFooterComponent={() => (
+                    <View style={[styles.card, { padding: 0, paddingTop: 16 }]}>
+                        <Text style={[styles.sectionTitle, { marginLeft: 16, marginBottom: 16 }]}>Comments & Messages</Text>
+                        <View style={{ height: 400 }}>
+                            <OrderChat 
+                                orderId={currentItem?.order_id || currentItem?.repair_id || currentItem?.id || taskId}
+                                currentUserType="manufacture"
+                            />
+                        </View>
                     </View>
-                </View>
-
-
-            </ScrollView>
+                )}
+            />
 
             <View style={styles.footer}>
                 <TouchableOpacity

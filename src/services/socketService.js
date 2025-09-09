@@ -1,12 +1,7 @@
 import io from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
-const SOCKET_URL = Platform.select({
-    ios: 'http://localhost:3000',
-    android: 'http://10.0.2.2:3000',
-    default: 'http://localhost:3000'
-});
+const SOCKET_URL = 'https://api.ornaaya.com';
 
 class SocketService {
     constructor() {
@@ -56,10 +51,12 @@ class SocketService {
                     auth: {
                         token: accessToken
                     },
-                    transports: ['websocket', 'polling'],
+                    transports: ['polling', 'websocket'],
                     reconnection: true,
                     reconnectionAttempts: 5,
                     reconnectionDelay: 1000,
+                    timeout: 10000,
+                    forceNew: true,
                 });
 
                 // Set up a timeout for connection
