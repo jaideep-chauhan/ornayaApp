@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(keytool:*)",
+      "Bash(gradlew.bat clean:*)",
+      "Bash(./gradlew.bat clean:*)",
+      "Bash(npx react-native:*)",
+      "Bash(dir:*)",
+      "Bash(gradlew.bat app:installDebug:*)",
+      "Bash(cmd /c gradlew.bat:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(set GRADLE_OPTS=-Xmx4096m)",
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
