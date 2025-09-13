@@ -22,6 +22,7 @@ import { logoutUser, updateUserPreferences } from '../../store/slices/authSlice'
 import { useTheme } from '../../contexts/ThemeContext';
 import { createCommonStyles } from '../../utils/commonStyles';
 import Toast from 'react-native-toast-message';
+import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -207,8 +208,8 @@ const Settings = () => {
                         <Switch
                             value={preferences.pushNotifications}
                             onValueChange={() => togglePreference('pushNotifications')}
-                            trackColor={{ false: '#D1D5DB', true: '#1E40AF' }}
-                            thumbColor="#fff"
+                            trackColor={{ false: COLORS.border, true: COLORS.accent }}
+                            thumbColor={COLORS.textWhite}
                         />
                     }
                 />
@@ -220,8 +221,8 @@ const Settings = () => {
                         <Switch
                             value={preferences.emailNotifications}
                             onValueChange={() => togglePreference('emailNotifications')}
-                            trackColor={{ false: '#D1D5DB', true: '#1E40AF' }}
-                            thumbColor="#fff"
+                            trackColor={{ false: COLORS.border, true: COLORS.accent }}
+                            thumbColor={COLORS.textWhite}
                         />
                     }
                 />
@@ -233,8 +234,8 @@ const Settings = () => {
                         <Switch
                             value={preferences.soundEnabled}
                             onValueChange={() => togglePreference('soundEnabled')}
-                            trackColor={{ false: '#D1D5DB', true: '#1E40AF' }}
-                            thumbColor="#fff"
+                            trackColor={{ false: COLORS.border, true: COLORS.accent }}
+                            thumbColor={COLORS.textWhite}
                         />
                     }
                 />
@@ -294,7 +295,7 @@ const Settings = () => {
                 {/* Logout Button */}
                 <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loading}>
                     <View style={styles.logoutIconContainer}>
-                        <Feather name="log-out" size={20} color="#fff" style={styles.logoutIcon} />
+                        <Feather name="log-out" size={20} color={COLORS.textWhite} style={styles.logoutIcon} />
                     </View>
                     <Text style={styles.logoutText}>
                         {loading ? 'Signing Out...' : 'Sign Out'}
@@ -307,7 +308,7 @@ const Settings = () => {
 
 const SectionHeader = ({ title, icon }) => (
     <View style={styles.sectionHeader}>
-        <Icon name={icon} size={16} color="#1E40AF" />
+        <Icon name={icon} size={16} color={COLORS.accent} />
         <Text style={styles.sectionTitle}>{title}</Text>
     </View>
 );
@@ -316,14 +317,14 @@ const SettingsItem = ({ icon, label, subtitle, rightContent, onPress }) => (
     <TouchableOpacity style={styles.settingRow} onPress={onPress}>
         <View style={styles.settingLeft}>
             <View style={styles.settingIconContainer}>
-                <Icon name={icon} size={16} color="#1E40AF" />
+                <Icon name={icon} size={16} color={COLORS.accent} />
             </View>
             <View style={styles.settingContent}>
                 <Text style={styles.settingLabel}>{label}</Text>
                 {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
             </View>
         </View>
-        {rightContent || <Feather name="chevron-right" size={20} color="#9CA3AF" />}
+        {rightContent || <Feather name="chevron-right" size={20} color={COLORS.textSecondary} />}
     </TouchableOpacity>
 );
 
@@ -332,7 +333,7 @@ export default Settings;
 const styles = StyleSheet.create({
     safe: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.background,
         width: screenWidth,
         height: screenHeight,
     },
@@ -342,14 +343,14 @@ const styles = StyleSheet.create({
     },
     profileCard: {
         flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.cardBackground,
         padding: 20,
         borderRadius: 16,
         alignItems: 'center',
         marginBottom: 24,
         ...Platform.select({
             ios: {
-                shadowColor: '#000',
+                shadowColor: COLORS.shadow,
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.03,
                 shadowRadius: 3,
@@ -377,9 +378,9 @@ const styles = StyleSheet.create({
         width: 16,
         height: 16,
         borderRadius: 8,
-        backgroundColor: '#10B981',
+        backgroundColor: COLORS.secondary,
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: COLORS.textWhite,
     },
     profileInfo: {
         flex: 1,
@@ -393,25 +394,25 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#1F2937',
+        color: COLORS.textPrimary,
         flex: 1,
     },
     editIcon: {
-        color: '#1E40AF',
+        color: COLORS.accent,
         padding: 4,
     },
     email: {
         fontSize: 14,
-        color: '#6B7280',
+        color: COLORS.textSecondary,
         marginBottom: 2,
     },
     role: {
         fontSize: 14,
-        color: '#6B7280',
+        color: COLORS.textSecondary,
         marginBottom: 8,
     },
     membershipBadge: {
-        backgroundColor: '#EFF6FF',
+        backgroundColor: COLORS.accent + '10',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
@@ -419,12 +420,12 @@ const styles = StyleSheet.create({
     },
     membershipText: {
         fontSize: 12,
-        color: '#1E40AF',
+        color: COLORS.accent,
         fontWeight: '600',
     },
     statsContainer: {
         flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.background,
         padding: 16,
         borderRadius: 12,
         marginBottom: 24,
@@ -432,7 +433,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
         ...Platform.select({
             ios: {
-                shadowColor: '#000',
+                shadowColor: COLORS.shadow,
                 shadowOffset: { width: 0, height: 0.5 },
                 shadowOpacity: 0.02,
                 shadowRadius: 2,
@@ -449,18 +450,18 @@ const styles = StyleSheet.create({
     statNumber: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#1E40AF',
+        color: COLORS.accent,
         marginBottom: 2,
     },
     statLabel: {
         fontSize: 12,
-        color: '#6B7280',
+        color: COLORS.textSecondary,
         fontWeight: '500',
     },
     statDivider: {
         width: 1,
         height: 30,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: COLORS.border,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -472,21 +473,21 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1F2937',
+        color: COLORS.textPrimary,
         marginLeft: 8,
     },
     settingRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.background,
         paddingVertical: 16,
         paddingHorizontal: 16,
         borderRadius: 12,
         marginBottom: 8,
         ...Platform.select({
             ios: {
-                shadowColor: '#000',
+                shadowColor: COLORS.shadow,
                 shadowOffset: { width: 0, height: 0.5 },
                 shadowOpacity: 0.02,
                 shadowRadius: 1,
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 8,
-        backgroundColor: '#EFF6FF',
+        backgroundColor: COLORS.accent + '10',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -516,15 +517,15 @@ const styles = StyleSheet.create({
     settingLabel: {
         fontSize: 15,
         fontWeight: '500',
-        color: '#1F2937',
+        color: COLORS.textPrimary,
         marginBottom: 2,
     },
     settingSubtitle: {
         fontSize: 13,
-        color: '#6B7280',
+        color: COLORS.textSecondary,
     },
     logoutBtn: {
-        backgroundColor: '#EF4444',
+        backgroundColor: COLORS.danger,
         paddingVertical: 16,
         borderRadius: 16,
         marginTop: 32,
@@ -537,7 +538,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         ...Platform.select({
             ios: {
-                shadowColor: '#EF4444',
+                shadowColor: COLORS.danger,
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.25,
                 shadowRadius: 8,
@@ -560,7 +561,7 @@ const styles = StyleSheet.create({
         marginRight: 0,
     },
     logoutText: {
-        color: '#fff',
+        color: COLORS.textWhite,
         fontSize: 17,
         fontWeight: '700',
         letterSpacing: 0.5,

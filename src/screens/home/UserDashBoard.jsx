@@ -19,6 +19,7 @@ import { fetchDashboardData } from '../../store/slices/dashboardSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import { createCommonStyles, getStatusBadgeStyle } from '../../utils/commonStyles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { COLORS, SHADOWS, SPACING, BORDER_RADIUS, FONT_SIZES, FONT_WEIGHTS } from '../../constants/theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -150,11 +151,11 @@ const UserDashboard = () => {
     const generateMaterialItems = () => {
         const materials = dashboardData?.materialAssigned || [];
         const materialColors = [
-            { bgColor: '#E6F0FF', color: '#005AA9' },
-            { bgColor: '#FFEDE0', color: '#FF9142' },
-            { bgColor: '#E0F8FF', color: '#B58B00' },
-            { bgColor: '#F0E6FF', color: '#7B2D8E' },
-            { bgColor: '#E6FFE6', color: '#2D8E2D' }
+            { bgColor: COLORS.accent + '15', color: COLORS.accent },
+            { bgColor: COLORS.warning + '15', color: COLORS.warning },
+            { bgColor: COLORS.primary + '15', color: COLORS.primary },
+            { bgColor: COLORS.info + '15', color: COLORS.info },
+            { bgColor: COLORS.success + '15', color: COLORS.success }
         ];
         
         const materialIcons = {
@@ -181,9 +182,9 @@ const UserDashboard = () => {
             id: '1',
             title: `You have ${statistics?.totalTasks || 0} new order today!`,
             items: [
-                { label: 'Total Tasks', value: statistics?.totalTasks || 0, bgColor: '#E7F3FF', color: '#005AA9', icon: 'clipboard-check' },
-                { label: 'Product Repairs', value: statistics?.totalRepairs || 0, bgColor: '#FFE6D4', color: '#FF9142', icon: 'tools' },
-                { label: 'New Product', value: 9, bgColor: '#FEF5D3', color: '#B58B00', icon: 'package-variant' },
+                { label: 'Total Tasks', value: statistics?.totalTasks || 0, bgColor: COLORS.accent + '15', color: COLORS.accent, icon: 'clipboard-check' },
+                { label: 'Product Repairs', value: statistics?.totalRepairs || 0, bgColor: COLORS.warning + '15', color: COLORS.warning, icon: 'tools' },
+                { label: 'New Product', value: 9, bgColor: COLORS.primary + '15', color: COLORS.primary, icon: 'package-variant' },
             ],
         },
         {
@@ -247,7 +248,7 @@ const UserDashboard = () => {
             <SafeAreaView style={styles.safe}>
                 <TopBar title="Dashboard" showBack={false} showNotification={true} />
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#007BFF" />
+                    <ActivityIndicator size="large" color={COLORS.accent} />
                     <Text style={styles.loadingText}>Loading dashboard...</Text>
                 </View>
             </SafeAreaView>
@@ -349,13 +350,13 @@ export default UserDashboard;
 const styles = StyleSheet.create({
     safe: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
         width: screenWidth,
         height: screenHeight,
     },
     container: {
         paddingBottom: 20,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
     },
     loadingContainer: {
         flex: 1,
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#666',
+        color: COLORS.textSecondary,
     },
     userRow: {
         marginTop: 10,
@@ -387,13 +388,13 @@ const styles = StyleSheet.create({
         fontWeight: '400',
     },
     carouselCard: {
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.cardBackground,
         marginHorizontal: 8,
         borderRadius: 10,
         padding: 16,
         marginTop: 8,
         marginBottom: 12,
-        shadowColor: '#000',
+        shadowColor: COLORS.shadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 4,
@@ -404,8 +405,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 10,
     },
-    cardTitle: { fontSize: 14, fontWeight: '600', color: "#292A2D", },
-    viewMore: { fontSize: 12, color: '#007CFF', fontWeight: '400' },
+    cardTitle: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, },
+    viewMore: { fontSize: 12, color: COLORS.accent, fontWeight: '400' },
     cardRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -418,9 +419,9 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: 'center',
     },
-    cardLabel: { fontSize: 12, color: '#333' },
+    cardLabel: { fontSize: 12, color: COLORS.textPrimary },
     cardValueContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 5, justifyContent: 'center', gap: 5, },
-    cardValue: { fontSize: 18, fontWeight: 'bold', color: '#000' },
+    cardValue: { fontSize: 18, fontWeight: 'bold', color: COLORS.textPrimary },
     dots: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -430,31 +431,31 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#ccc',
+        backgroundColor: COLORS.border,
         marginHorizontal: 4,
     },
     dotActive: {
-        backgroundColor: '#007BFF',
+        backgroundColor: COLORS.accent,
         width: 10,
         height: 10,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 500,
-        color: '#242424',
+        color: COLORS.textPrimary,
         paddingHorizontal: 16,
         marginTop: 16,
         marginBottom: 8,
     },
     agendaCard: {
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.cardBackground,
         borderRadius: 10,
         marginHorizontal: 16,
         padding: 16,
         marginBottom: 14,
 
         // iOS shadow
-        shadowColor: '#494949',
+        shadowColor: COLORS.shadow,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.1, // ~1A in hex = 10% opacity
         shadowRadius: 10, // Approx for 20px blur
@@ -467,17 +468,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
-    agendaTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A1A' },
-    agendaDate: { fontSize: 14, fontWeight: '400', color: '#878787' },
-    agendaId: { fontSize: 12, color: '#0067C8', marginVertical: 4, fontWeight: '400' },
+    agendaTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+    agendaDate: { fontSize: 14, fontWeight: '400', color: COLORS.textSecondary },
+    agendaId: { fontSize: 12, color: COLORS.accent, marginVertical: 4, fontWeight: '400' },
     agendaDescription: { 
         fontSize: 14, 
         fontWeight: '400', 
-        color: '#666666', 
+        color: COLORS.textSecondary, 
         marginTop: 4,
         lineHeight: 20,
     },
-    dueText: { fontSize: 14, fontWeight: 400, color: '#D10000', marginTop: 4, },
+    dueText: { fontSize: 14, fontWeight: 400, color: COLORS.danger, marginTop: 4, },
     agendaActions: {
         marginTop: 10,
         flexDirection: 'row',
@@ -491,7 +492,7 @@ const styles = StyleSheet.create({
     },
     statusText: { fontSize: 14, fontWeight: '400' },
     detailsBtn: {
-        backgroundColor: '#007BFF',
+        backgroundColor: COLORS.accent,
         height: 34,
         width: 130,
         borderRadius: 7,
@@ -499,13 +500,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     detailsText: {
-        color: '#fff',
+        color: COLORS.textWhite,
         fontSize: 13,
         fontWeight: '400',
     },
     emptyMessage: {
         textAlign: 'center',
-        color: '#888',
+        color: COLORS.textSecondary,
         fontSize: 14,
         fontStyle: 'italic',
         marginVertical: 10,

@@ -17,6 +17,7 @@ import { loginUser, clearError } from '../../store/slices/authSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import { createCommonStyles } from '../../utils/commonStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function LoginScreen() {
@@ -58,7 +59,7 @@ export default function LoginScreen() {
             >
                 <ScrollView contentContainerStyle={styles.scroll}>
                     <View style={styles.centered}>
-                        <Icon name="diamond" size={35} color="#007BFF" />
+                        <Icon name="diamond" size={35} color={COLORS.primary} />
                         <Text style={[commonStyles.heading1, styles.logo]}>Ornaaya</Text>
                         <Text style={[commonStyles.bodyText, styles.subtitle]}>
                             Manage your work and growth seamlessly.
@@ -174,12 +175,12 @@ const createStyles = (theme) => StyleSheet.create({
         width: '100%',
         maxWidth: 400,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
-        borderRadius: 12, // optional, makes it look nicer
-        backgroundColor: '#fff', // required for shadows
+        borderColor: COLORS.border,
+        borderRadius: BORDER_RADIUS.lg,
+        backgroundColor: COLORS.cardBackground,
 
         // iOS shadow
-        shadowColor: '#494949',
+        shadowColor: COLORS.shadow,
         shadowOffset: {
             width: 0,
             height: 0,
@@ -210,7 +211,7 @@ const createStyles = (theme) => StyleSheet.create({
     input: {
         height: 44,
         borderWidth: 1,
-        borderColor: '#E1E1E1',
+        borderColor: COLORS.border,
         borderRadius: 8,
         paddingHorizontal: 12,
         marginBottom: 10,
@@ -249,7 +250,7 @@ const createStyles = (theme) => StyleSheet.create({
         fontSize: 13,
     },
     loginButton: {
-        backgroundColor: '#007BFF',
+        backgroundColor: COLORS.accent,
         borderRadius: 10,
         paddingVertical: 12,
         marginTop: 20,
@@ -268,7 +269,7 @@ const createStyles = (theme) => StyleSheet.create({
         marginBottom: 30,
     },
     helpLink: {
-        color: '#007AFF',
+        color: COLORS.accent,
         fontWeight: 400,
         fontSize: 12,
     },

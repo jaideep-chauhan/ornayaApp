@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.ornaaya"
     compileSdk = rootProject.ext.compileSdkVersion
-    ndkVersion = rootProject.ext.ndkVersion
+    // ndkVersion = rootProject.ext.ndkVersion
     buildToolsVersion = rootProject.ext.buildToolsVersion
 
     defaultConfig {

@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import TopBar from '../../components/ui/TopBar';
 import { useNavigation } from '@react-navigation/native';
 import { fetchAllTasks, setFilter, setSearchQuery } from '../../store/slices/tasksSlice';
+import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -63,10 +64,10 @@ const StatusBadge = ({ status }) => {
     const displayStatus = status === 'pending' ? 'New' : status;
 
     return (
-        <View style={[styles.statusBadge, { backgroundColor: bgColor[displayStatus] || '#DCD4FF' }]}>
+        <View style={[styles.statusBadge, { backgroundColor: bgColor[displayStatus] || COLORS.border }]}>
             <Text style={[
                 styles.statusText,
-                { color: textColor[displayStatus] || '#000000' }, // Default to black if unknown
+                { color: textColor[displayStatus] || COLORS.textPrimary }, // Default to primary text color if unknown
             ]}>
                 {displayStatus}
             </Text>
@@ -199,11 +200,11 @@ const TaskList = () => {
                 {/* Search Input with Icon */}
                 <View style={{ paddingHorizontal: 16 }}>
                     <View style={styles.searchBar}>
-                        <Icon name="search" size={21} color="#7D7D7D" style={styles.searchIcon} />
+                        <Icon name="search" size={21} color={COLORS.textSecondary} style={styles.searchIcon} />
                         <TextInput
                             placeholder="Search task name or ID..."
                             style={styles.inputWithIcon}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={COLORS.placeholder}
                             value={searchQuery}
                             onChangeText={handleSearchChange}
                         />
@@ -222,11 +223,11 @@ const TaskList = () => {
                                     styles.filterChip,
                                     {
                                         backgroundColor: isActive
-                                            ? filterBgColors[option] || '#F8F8F8'
-                                            : '#F8F8F8',
+                                            ? filterBgColors[option] || COLORS.backgroundSecondary
+                                            : COLORS.backgroundSecondary,
                                         borderColor: isActive
-                                            ? filterBgColors[option] || '#ddd'
-                                            : '#ddd',
+                                            ? filterBgColors[option] || COLORS.border
+                                            : COLORS.border,
                                     },
                                 ]}
                                 onPress={() => handleFilterChange(option)}
@@ -236,8 +237,8 @@ const TaskList = () => {
                                         styles.filterText,
                                         {
                                             color: isActive
-                                                ? filterTextColors[option] || '#333'
-                                                : '#333',
+                                                ? filterTextColors[option] || COLORS.textPrimary
+                                                : COLORS.textPrimary,
                                             fontWeight: isActive ? '600' : '400',
                                         },
                                     ]}
@@ -292,7 +293,7 @@ export default TaskList;
 const styles = StyleSheet.create({
     safe: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
         width: screenWidth,
         height: screenHeight,
         paddingBottom: 150,
@@ -305,9 +306,9 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        borderColor: '#ddd',
+        backgroundColor: COLORS.background,
+        borderRadius: BORDER_RADIUS.md,
+        borderColor: COLORS.border,
         borderWidth: 1,
         height: 44,
     },
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '400',
         paddingRight: 14,
-        color: '#111',
+        color: COLORS.textPrimary,
     },
     filterContainer: {
         flexDirection: 'row',
@@ -337,32 +338,32 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: '#ddd',
-        backgroundColor: '#F8F8F8',
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.backgroundSecondary,
     },
     filterActive: {
-        backgroundColor: '#007BFF',
-        borderColor: '#007BFF',
+        backgroundColor: COLORS.accent,
+        borderColor: COLORS.accent,
     },
     filterText: {
         fontSize: 13,
-        color: '#333',
+        color: COLORS.textPrimary,
     },
     filterTextActive: {
-        color: '#fff',
+        color: COLORS.textWhite,
         fontWeight: '600',
     },
     listContainer: {
         paddingHorizontal: 16,
     },
     taskCard: {
-        backgroundColor: '#fff',
-        borderRadius: 8,
+        backgroundColor: COLORS.cardBackground,
+        borderRadius: BORDER_RADIUS.md,
         padding: 16,
         marginBottom: 12,
         marginHorizontal: 16,
         // iOS shadow
-        shadowColor: '#494949',
+        shadowColor: COLORS.shadow,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.1, // Adjusted to reflect 10% opacity (1A in hex is ~10%)
         shadowRadius: 20,
@@ -379,23 +380,23 @@ const styles = StyleSheet.create({
     taskTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#1A1A1A',
+        color: COLORS.textPrimary,
     },
     taskDate: {
         fontSize: 14,
-        color: '#878787',
+        color: COLORS.textSecondary,
         fontWeight: '400',
     },
     taskId: {
         fontSize: 12,
         fontWeight: '400',
-        color: '#0067C8',
+        color: COLORS.accent,
         marginVertical: 4,
     },
     dueText: {
         fontSize: 14,
         fontWeight: '400',
-        color: '#D10000',
+        color: COLORS.danger,
         marginBottom: 10,
     },
     taskBottom: {
@@ -410,10 +411,10 @@ const styles = StyleSheet.create({
     },
     statusText: {
         fontSize: 12,
-        color: '#111',
+        color: COLORS.textPrimary,
     },
     viewBtn: {
-        backgroundColor: '#007BFF',
+        backgroundColor: COLORS.accent,
         height: 34,
         width: 130,
         justifyContent: 'center',
@@ -421,7 +422,7 @@ const styles = StyleSheet.create({
         borderRadius: 7,
     },
     viewText: {
-        color: '#fff',
+        color: COLORS.textWhite,
         fontSize: 13,
         fontWeight: '400',
     },
@@ -429,10 +430,10 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 14,
         marginTop: 20,
-        color: '#999',
+        color: COLORS.textSecondary,
     },
     errorContainer: {
-        backgroundColor: '#FFEBEE',
+        backgroundColor: COLORS.danger + '20',
         padding: 16,
         marginHorizontal: 16,
         marginVertical: 8,
@@ -440,19 +441,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     errorText: {
-        color: '#C62828',
+        color: COLORS.danger,
         fontSize: 14,
         marginBottom: 8,
         textAlign: 'center',
     },
     retryButton: {
-        backgroundColor: '#C62828',
+        backgroundColor: COLORS.danger,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 6,
     },
     retryText: {
-        color: '#fff',
+        color: COLORS.textWhite,
         fontSize: 14,
         fontWeight: '500',
     },
@@ -464,7 +465,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#666',
+        color: COLORS.textSecondary,
     },
     emptyContainer: {
         alignItems: 'center',
@@ -475,12 +476,12 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#333',
+        color: COLORS.textPrimary,
         marginBottom: 8,
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#666',
+        color: COLORS.textSecondary,
         textAlign: 'center',
     },
 });

@@ -6,6 +6,7 @@ import UserDashBoard from '../screens/home/UserDashBoard';
 import TaskList from '../screens/tasks/TaskList';
 import RepairList from '../screens/repairList/RepairList';
 import Settings from '../screens/setting/Settings';
+import { COLORS, SHADOWS } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
 
@@ -38,27 +39,23 @@ const TabNavigator = () => {
                             <Icon
                                 name={iconName}
                                 size={24}
-                                color={focused ? '#007BFF' : '#333'}
+                                color={focused ? COLORS.accent : COLORS.textSecondary}
                             />
                         );
                     },
-                    tabBarActiveTintColor: '#007BFF',
-                    tabBarInactiveTintColor: '#333',
+                    tabBarActiveTintColor: COLORS.accent,
+                    tabBarInactiveTintColor: COLORS.textSecondary,
                     tabBarStyle: {
-                        backgroundColor: '#F5F5F5',
+                        backgroundColor: COLORS.background,
                         height: 70,
                         borderTopLeftRadius: 30,
                         borderTopRightRadius: 30,
                         borderWidth: 1,
-                        borderColor: '#00B4D8',
+                        borderColor: COLORS.primary,
                         marginHorizontal: 8,
                         marginBottom: 6,
                         position: 'absolute',
-                        elevation: 5,
-                        shadowColor: '#000',
-                        shadowOpacity: 0.1,
-                        shadowOffset: { width: 0, height: -1 },
-                        shadowRadius: 5,
+                        ...SHADOWS.lg,
                         overflow: 'hidden',
                     },
                     tabBarLabelStyle: {
