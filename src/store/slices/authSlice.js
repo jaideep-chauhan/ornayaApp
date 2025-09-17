@@ -15,18 +15,31 @@ export const loginUser = createAsyncThunk(
                 // Store token in AsyncStorage
                 await AsyncStorage.setItem('token', JSON.stringify(response.data.tokens));
 
-                // Extract user info from JWT token
-                const decodedToken = decodeJWT(response.data.tokens.accessToken);
-console.log("Decoded Token:", decodedToken);
-
-                const userInfo = {
-                    user_id: decodedToken?.user_id,
-                    member_id: decodedToken?.member_id,
-                    company_id: decodedToken?.company_id,
-                    username: decodedToken.first_name + ' ' + decodedToken.last_name,
-                    company_key: credentials.company_key,
-                    loginTime: new Date().toISOString(),
-                };
+                // Use optimized user data from response if available
+                let userInfo;
+                if (response.data.user) {
+                    // Use the optimized user data from backend
+                    userInfo = {
+                        ...response.data.user,
+                        username: credentials.username,
+                        company_key: credentials.company_key,
+                        loginTime: new Date().toISOString(),
+                    };
+                } else {
+                    // Fallback to extracting from JWT token
+                    const decodedToken = decodeJWT(response.data.tokens.accessToken);
+                    console.log("Decoded Token:", decodedToken);
+                    
+                    userInfo = {
+                        user_id: decodedToken?.user_id,
+                        member_id: decodedToken?.member_id,
+                        company_id: decodedToken?.company_id,
+                        role: decodedToken?.role,
+                        username: credentials.username,
+                        company_key: credentials.company_key,
+                        loginTime: new Date().toISOString(),
+                    };
+                }
 
                 await AsyncStorage.setItem('user', JSON.stringify(userInfo));
 
@@ -39,7 +52,8 @@ console.log("Decoded Token:", decodedToken);
                 return {
                     tokens: response.data.tokens,
                     user: userInfo,
-                    message: response.data.message
+                    message: response.data.message,
+                    optimized: !!response.data.user // Track if we got optimized data
                 };
             } else {
                 Toast.show({

@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import UserDashBoard from '../screens/home/UserDashBoard';
 import TaskList from '../screens/tasks/TaskList';
 import RepairList from '../screens/repairList/RepairList';
+import MaterialRequestList from '../screens/materials/MaterialRequestList';
 import Settings from '../screens/setting/Settings';
 import { COLORS, SHADOWS } from '../constants/theme';
 
@@ -27,6 +28,9 @@ const TabNavigator = () => {
                                 break;
                             case 'Repair List':
                                 iconName = 'tool';
+                                break;
+                            case 'Materials':
+                                iconName = 'package';
                                 break;
                             case 'Setting':
                                 iconName = 'settings';
@@ -68,6 +72,7 @@ const TabNavigator = () => {
                 <Tab.Screen name="Home" component={UserDashBoard} />
                 <Tab.Screen name="Order List" component={TaskList} />
                 <Tab.Screen name="Repair List" component={RepairList} />
+                <Tab.Screen name="Materials" component={MaterialRequestList} />
                 <Tab.Screen name="Setting" component={Settings} />
             </Tab.Navigator>
         </View>

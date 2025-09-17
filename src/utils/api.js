@@ -3,13 +3,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-// Live production URL
-const BASE_URL = 'https://api.ornaaya.com/api/';
+// API Configuration
+const DEV_URL = 'http://10.0.2.2:3000/api/'; // Android emulator
+// const DEV_URL = 'http://192.168.1.XXX:3000/api/'; // Physical device
+const PROD_URL = 'https://api.ornaaya.com/api/';
+
+// Use __DEV__ to automatically switch between environments
+const BASE_URL = __DEV__ ? DEV_URL : PROD_URL;
 
 console.log('Using API BASE_URL:', BASE_URL);
-
-// For physical devices, use your computer's IP address:
-// const BASE_URL = 'http://192.168.1.XXX:3000/api/';
 
 async function getAccessToken() {
     const raw = await AsyncStorage.getItem('token');
@@ -41,6 +43,7 @@ const callApi = async ({ route, method = 'GET', body, baseUrl = BASE_URL }) => {
         const headers = {
             'Content-Type': 'application/json',
             'X-Client-Type': 'mobile',
+            'X-Platform': 'react-native',
             ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         };
 

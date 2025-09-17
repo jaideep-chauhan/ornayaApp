@@ -3,6 +3,7 @@ import authSlice from './slices/authSlice';
 import dashboardSlice from './slices/dashboardSlice';
 import tasksSlice from './slices/tasksSlice';
 import repairsSlice from './slices/repairsSlice';
+import materialRequestSlice from './slices/materialRequestSlice';
 
 export const store = configureStore({
     reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
         dashboard: dashboardSlice,
         tasks: tasksSlice,
         repairs: repairsSlice,
+        materialRequests: materialRequestSlice,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

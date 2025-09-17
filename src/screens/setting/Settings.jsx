@@ -198,7 +198,7 @@ const Settings = () => {
                     onPress={() => Alert.alert('Feature Coming Soon', 'Privacy settings will be available soon.')}
                 />
 
-                {/* Notification Settings */}                {/* Notifications */}
+                {/* Notification Settings */}
                 <SectionHeader title="Notifications" icon="bell" />
                 <SettingsItem
                     icon="bell"
@@ -254,15 +254,6 @@ const Settings = () => {
                             thumbColor={theme.colors.surface}
                         />
                     }
-                />
-
-                {/* Developer Tools */}
-                <SectionHeader title="Developer Tools" icon="code" />
-                <SettingsItem
-                    icon="vial"
-                    label="API Test Suite"
-                    subtitle="Test all API endpoints"
-                    onPress={() => navigation.navigate('ApiTest')}
                 />
 
                 {/* Support & Info */}

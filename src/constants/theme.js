@@ -1,43 +1,105 @@
-export const COLORS = {
-  // Primary Colors
-  primary: '#009688', // Teal/Cyan - Logo text, main brand color
+// Light Theme Colors (Default)
+export const LIGHT_COLORS = {
+  // Primary Colors - Matching Portal Theme
+  primary: '#009688', // Main theme color (Teal)
+  primaryHover: '#00796B', // Darker shade for hover/pressed
+  primaryLight: '#4DB6AC', // Lighter shade
   secondary: '#4CAF50', // Green - Progress indicators, success states
-  accent: '#3F8CFF', // Blue - Buttons, highlights, interactive elements
+  accent: '#3F8CFF', // Accent Blue for highlights
   
-  // Text Colors
-  textPrimary: '#333333', // Dark gray - Headings, important text
-  textSecondary: '#666666', // Medium gray - Descriptions, subtext
-  textLight: '#999999', // Light gray - Hints, placeholders
+  // Text Colors - Matching Portal
+  textPrimary: '#333333', // Primary text color
+  textSecondary: '#666666', // Secondary text color
+  textLight: '#9CA3AF', // Light gray - Hints, placeholders
   textWhite: '#FFFFFF', // White text on dark backgrounds
+  textMuted: '#666666', // Disabled/muted text
   
-  // Background Colors
-  background: '#FFFFFF', // Main background - Clean white
-  backgroundSecondary: '#F8FAFC', // Sidebar/Secondary areas - Very light gray/blue
+  // Background Colors - Matching Portal
+  background: '#FFFFFF', // Main background color
+  backgroundSecondary: '#F8FAFC', // Input/Sidebar background
   cardBackground: '#FFFFFF', // Card backgrounds
   inputBackground: '#F8FAFC', // Input fields background
   
-  // Status Colors
-  success: '#4CAF50', // Green - Success messages, available status
-  danger: '#F44336', // Red - Errors, out of stock
-  warning: '#FF9800', // Orange - Warnings, pending states
-  info: '#3F8CFF', // Blue - Information messages
+  // Status Colors - Matching Portal
+  success: '#4CAF50', // Success/Progress text color
+  danger: '#F44336', // Error/Danger text color
+  warning: '#FF9800', // Warning text color
+  info: '#3F8CFF', // Information messages
   
-  // Neutral Colors
-  border: '#E5E7EB', // Light gray - Borders, dividers
+  // Neutral Colors - Matching Portal
+  border: '#E5E7EB', // Border color for inputs
   borderLight: '#F0F0F0', // Very light borders
   shadow: 'rgba(0, 0, 0, 0.1)', // Shadow color
   overlay: 'rgba(0, 0, 0, 0.5)', // Modal overlay
   
-  // Special States
-  disabled: '#E0E0E0', // Disabled elements
-  placeholder: '#999999', // Placeholder text
-  highlight: '#FFF3E0', // Highlight background (light orange)
+  // Special States - Matching Portal
+  disabled: '#E5E7EB', // Disabled button background (muted-bg)
+  disabledText: '#666666', // Disabled button text (muted-foreground)
+  placeholder: '#9CA3AF', // Placeholder text
+  highlight: '#FFF3E0', // Highlight background
   
   // Additional UI Colors
-  link: '#3F8CFF', // Links
+  link: '#3F8CFF', // Link color using accent blue
   divider: '#E5E7EB', // Divider lines
-  scrollbar: '#E0E0E0', // Scrollbar color
-  hover: '#F5F5F5', // Hover state background
+  scrollbar: '#E5E7EB', // Scrollbar color
+  hover: '#F8FAFC', // Hover state background
+  ring: '#009688', // Focus ring color
+};
+
+// Dark Theme Colors - Matching Portal Theme
+export const DARK_COLORS = {
+  // Primary Colors - Matching Portal Dark Theme
+  primary: '#009688', // Main theme color (Teal)
+  primaryHover: '#00796B', // Darker shade for hover/pressed
+  primaryLight: '#4DB6AC', // Lighter shade
+  secondary: '#4CAF50', // Green - Progress indicators, success states
+  accent: '#3F8CFF', // Accent Blue for highlights
+  
+  // Text Colors - Dark Theme
+  textPrimary: '#D1D5DB', // Light text for readability
+  textSecondary: '#9CA3AF', // Secondary text color
+  textLight: '#6B7280', // Light gray - Hints, placeholders
+  textWhite: '#FFFFFF', // White text
+  textMuted: '#9CA3AF', // Disabled/muted text
+  
+  // Background Colors - Dark Theme
+  background: '#0F0F0F', // Dark background
+  backgroundSecondary: '#1F2937', // Input background
+  cardBackground: '#1A1A1A', // Card backgrounds
+  inputBackground: '#1F2937', // Input fields background
+  
+  // Status Colors - Same in Dark Theme
+  success: '#4CAF50', // Success/Progress text color
+  danger: '#F44336', // Error/Danger text color
+  warning: '#FF9800', // Warning text color
+  info: '#3F8CFF', // Information messages
+  
+  // Neutral Colors - Dark Theme
+  border: '#374151', // Border color for inputs
+  borderLight: '#1F2937', // Very light borders
+  shadow: 'rgba(0, 0, 0, 0.3)', // Shadow color
+  overlay: 'rgba(0, 0, 0, 0.7)', // Modal overlay
+  
+  // Special States - Dark Theme
+  disabled: '#374151', // Disabled button background
+  disabledText: '#9CA3AF', // Disabled button text
+  placeholder: '#6B7280', // Placeholder text
+  highlight: '#2D3748', // Highlight background
+  
+  // Additional UI Colors - Dark Theme
+  link: '#3F8CFF', // Link color (brighter for dark theme)
+  divider: '#374151', // Divider lines
+  scrollbar: '#374151', // Scrollbar color
+  hover: '#1F2937', // Hover state background
+  ring: '#009688', // Focus ring color
+};
+
+// Default to light theme (can be dynamically switched)
+export let COLORS = LIGHT_COLORS;
+
+// Function to switch theme colors
+export const setThemeColors = (isDark) => {
+  COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
 };
 
 export const SPACING = {

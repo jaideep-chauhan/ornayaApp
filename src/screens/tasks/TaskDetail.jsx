@@ -1753,6 +1753,4 @@ const styles = StyleSheet.create({
     iconButton: {
         marginLeft: 10,
     },
-
-
 });

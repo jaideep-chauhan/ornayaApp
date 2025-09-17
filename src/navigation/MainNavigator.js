@@ -5,9 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { checkAuthState } from '../store/slices/authSlice';
 import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/auth/Login';
+import ForgotPasswordScreen from '../screens/auth/ForgotPassword';
 import TabNavigator from './TabNavigator';
 import TaskDetail from '../screens/tasks/TaskDetail';
 import MaterialUsageScreen from '../components/MaterialUsage';
+import MaterialRequestDetail from '../screens/materials/MaterialRequestDetail';
 import EditProfile from '../screens/setting/EditProfile';
 import ApiTestScreen from '../screens/ApiTestScreen';
 
@@ -45,12 +47,14 @@ const MainNavigator = () => {
                 {!isAuthenticated ? (
                     <>
                         <Stack.Screen name="Login" component={LoginScreen} />
+                        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
                     </>
                 ) : (
                     <>
                         <Stack.Screen name="Main" component={TabNavigator} />
                         <Stack.Screen name="TaskDetail" component={TaskDetail} />
                         <Stack.Screen name="MaterialUsage" component={MaterialUsageScreen} />
+                        <Stack.Screen name="MaterialRequestDetail" component={MaterialRequestDetail} />
                         <Stack.Screen name="EditProfile" component={EditProfile} />
                         <Stack.Screen name="ApiTest" component={ApiTestScreen} />
                     </>

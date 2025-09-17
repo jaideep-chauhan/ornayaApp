@@ -13,15 +13,18 @@ import {
     Dimensions,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 import { loginUser, clearError } from '../../store/slices/authSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import { createCommonStyles } from '../../utils/commonStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import Toast from 'react-native-toast-message';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const dispatch = useDispatch();
+    const navigation = useNavigation();
     const { loading, error } = useSelector((state) => state.auth);
     const { theme } = useTheme();
     const commonStyles = createCommonStyles(theme);
@@ -42,7 +45,24 @@ export default function LoginScreen() {
     };
 
     const handleLogin = async () => {
-        if (!formData.username || !formData.password || !formData.company_key) {
+        // For admin users (email ending with @ornaaya.com), company_key is optional
+        const isAdminEmail = formData.username.endsWith('@ornaaya.com');
+        
+        if (!formData.username || !formData.password) {
+            Toast.show({
+                type: 'error',
+                text1: 'Missing Information',
+                text2: 'Please enter email and password',
+            });
+            return;
+        }
+        
+        if (!isAdminEmail && !formData.company_key) {
+            Toast.show({
+                type: 'error',
+                text1: 'Company ID Required',
+                text2: 'Please enter your company ID',
+            });
             return;
         }
 
@@ -105,15 +125,17 @@ export default function LoginScreen() {
                                 editable={!loading}
                             />
 
-                            {/* <View style={styles.row}>
-                                
-                                <Text style={styles.link}>Forgot Password?</Text>
-                            </View> */}
+                            <TouchableOpacity 
+                                style={styles.forgotPasswordContainer}
+                                onPress={() => navigation.navigate('ForgotPassword')}
+                            >
+                                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                            </TouchableOpacity>
 
                             <TouchableOpacity
                                 style={styles.loginButton}
                                 onPress={handleLogin}
-                                disabled={loading || !formData.username || !formData.password || !formData.company_key}
+                                disabled={loading || !formData.username || !formData.password}
                             >
                                 {loading ? (
                                     <ActivityIndicator color={theme.colors.textInverse} size="small" />
@@ -248,6 +270,16 @@ const createStyles = (theme) => StyleSheet.create({
         color: theme.colors.primary,
         fontWeight: '500',
         fontSize: 13,
+    },
+    forgotPasswordContainer: {
+        alignSelf: 'flex-end',
+        marginTop: theme.spacing.sm,
+        marginBottom: theme.spacing.md,
+    },
+    forgotPasswordText: {
+        color: theme.colors.primary,
+        fontWeight: '500',
+        fontSize: 14,
     },
     loginButton: {
         backgroundColor: COLORS.accent,

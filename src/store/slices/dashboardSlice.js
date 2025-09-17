@@ -7,10 +7,12 @@ export const fetchDashboardData = createAsyncThunk(
     'dashboard/fetchDashboardData',
     async (_, { rejectWithValue }) => {
         try {
+            // Manufacturer dashboard endpoint
             const response = await apiGet('manufacture/mainPage/data');
-            if (response.ok) {
-                return response.data.data;
-                console.log("response data dashboard", response.data.data);
+            
+            if (response.ok || response.data) {
+                console.log("Manufacturer dashboard response:", response);
+                return response.data?.data || response.data || response;
             } else {
                 Toast.show({
                     type: 'error',
@@ -20,6 +22,7 @@ export const fetchDashboardData = createAsyncThunk(
                 return rejectWithValue(response.data?.message || 'Failed to fetch dashboard data');
             }
         } catch (error) {
+            console.error('Dashboard fetch error:', error);
             Toast.show({
                 type: 'error',
                 text1: 'Dashboard Error',
