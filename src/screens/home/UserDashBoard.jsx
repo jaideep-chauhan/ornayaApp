@@ -166,7 +166,7 @@ const UserDashboard = () => {
             'Diamond': 'diamond'
         };
 
-        return materials.map((material, index) => ({
+        const allMaterials = materials.map((material, index) => ({
             label: material.materialName,
             value: `${material.quantity}${material.unit}`,
             bgColor: materialColors[index % materialColors.length].bgColor,
@@ -174,6 +174,15 @@ const UserDashboard = () => {
             icon: materialIcons[material.materialName] || 'circle-outline',
             materialData: material
         }));
+
+        // Return only first 2 items for dashboard display
+        return allMaterials.slice(0, 2);
+    };
+
+    const handleViewMoreMaterials = () => {
+        navigation.navigate('MaterialList', {
+            materials: dashboardData?.materialAssigned || []
+        });
     };
 
     // Use API data if available, otherwise fall back to static data
@@ -191,6 +200,8 @@ const UserDashboard = () => {
             id: '2',
             title: `Material Issued`,
             items: generateMaterialItems(),
+            showViewMore: true,
+            totalMaterialsCount: dashboardData?.materialAssigned?.length || 0,
         }
     ];
 
@@ -284,7 +295,15 @@ const UserDashboard = () => {
                         >
                             <View style={styles.carouselHeader}>
                                 <Text style={styles.cardTitle}>{item.title}</Text>
-                                <Text style={styles.viewMore}>View More</Text>
+                                {item.showViewMore && item.totalMaterialsCount > 2 ? (
+                                    <TouchableOpacity onPress={handleViewMoreMaterials}>
+                                        <Text style={styles.viewMore}>
+                                            View More ({item.totalMaterialsCount})
+                                        </Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <Text style={styles.viewMore}>View More</Text>
+                                )}
                             </View>
                             <View style={styles.cardRow}>
                                 {item.items.map((info, idx) => (

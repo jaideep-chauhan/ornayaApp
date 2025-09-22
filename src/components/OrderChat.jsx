@@ -15,13 +15,17 @@ import {
     RefreshControl,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'react-native-image-picker';
 import { apiGet, apiPost, apiPut } from '../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import socketService from '../services/socketService';
+import { useTheme } from '../contexts/ThemeContext';
+import { COLORS, SHADOWS, SPACING, BORDER_RADIUS, FONT_SIZES, FONT_WEIGHTS } from '../constants/theme';
 
 const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
+    const { theme } = useTheme();
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
@@ -348,14 +352,17 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
             <>
                 {showDateHeader && (
                     <View style={styles.dateHeader}>
-                        <Text style={styles.dateHeaderText}>
-                            {new Date(item.created_at).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            })}
-                        </Text>
+                        <View style={styles.dateHeaderContainer}>
+                            <View style={styles.dateHeaderLine} />
+                            <Text style={styles.dateHeaderText}>
+                                {new Date(item.created_at).toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric'
+                                })}
+                            </Text>
+                            <View style={styles.dateHeaderLine} />
+                        </View>
                     </View>
                 )}
                 <View style={[
@@ -367,9 +374,17 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
                         isOwnMessage ? styles.ownBubble : styles.otherBubble
                     ]}>
                         {!isOwnMessage && (
-                            <Text style={styles.senderName}>
-                                {item.sender_name} ({item.sender_role})
-                            </Text>
+                            <View style={styles.senderHeader}>
+                                <View style={styles.avatarContainer}>
+                                    <MaterialIcon name="account-circle" size={16} color={COLORS.textSecondary} />
+                                </View>
+                                <Text style={styles.senderName}>
+                                    {item.sender_name}
+                                </Text>
+                                <View style={styles.roleTag}>
+                                    <Text style={styles.roleText}>{item.sender_role}</Text>
+                                </View>
+                            </View>
                         )}
                         
                         {item.message && (
@@ -415,9 +430,21 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
 
     const renderEmptyComponent = () => (
         <View style={styles.emptyContainer}>
-            <Icon name="message-circle" size={48} color="#D1D5DB" />
+            <View style={styles.emptyIconContainer}>
+                <MaterialIcon name="chat-outline" size={64} color={COLORS.textLight} />
+            </View>
             <Text style={styles.emptyText}>No messages yet</Text>
-            <Text style={styles.emptySubText}>Start the conversation!</Text>
+            <Text style={styles.emptySubText}>Start the conversation to collaborate on this order</Text>
+            <View style={styles.emptyFeatures}>
+                <View style={styles.featureItem}>
+                    <MaterialIcon name="image" size={16} color={COLORS.accent} />
+                    <Text style={styles.featureText}>Share images</Text>
+                </View>
+                <View style={styles.featureItem}>
+                    <MaterialIcon name="clock-outline" size={16} color={COLORS.accent} />
+                    <Text style={styles.featureText}>Real-time messaging</Text>
+                </View>
+            </View>
         </View>
     );
 
@@ -474,6 +501,11 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
             {/* Typing Indicator */}
             {Object.keys(typingUsers).length > 0 && (
                 <View style={styles.typingIndicator}>
+                    <View style={styles.typingDots}>
+                        <View style={[styles.dot, styles.dot1]} />
+                        <View style={[styles.dot, styles.dot2]} />
+                        <View style={[styles.dot, styles.dot3]} />
+                    </View>
                     <Text style={styles.typingText}>
                         {Object.values(typingUsers).filter(Boolean).join(', ')} {Object.keys(typingUsers).length === 1 ? 'is' : 'are'} typing...
                     </Text>
@@ -481,48 +513,58 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
             )}
             
             <View style={styles.inputContainer}>
-                {/* Connection Status Indicator */}
-                <View style={[styles.connectionIndicator, { backgroundColor: isConnected ? '#10B981' : '#EF4444' }]} />
-                <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
-                    <Icon name="paperclip" size={22} color="#6B7280" />
-                </TouchableOpacity>
+                {/* Connection Status */}
+                <View style={styles.connectionStatus}>
+                    <View style={[styles.connectionDot, { backgroundColor: isConnected ? COLORS.success : COLORS.danger }]} />
+                    <Text style={styles.connectionText}>
+                        {isConnected ? 'Connected' : 'Offline'}
+                    </Text>
+                </View>
                 
-                <TextInput
-                    style={styles.textInput}
-                    placeholder="Type a message..."
-                    placeholderTextColor="#9CA3AF"
-                    value={newMessage}
-                    onChangeText={(text) => {
-                        setNewMessage(text);
-                        // Handle typing indicator
-                        if (isConnected && text.length > 0) {
-                            if (typingTimeoutRef.current) {
-                                clearTimeout(typingTimeoutRef.current);
-                            }
-                            socketService.startTyping(orderId, userName);
-                            typingTimeoutRef.current = setTimeout(() => {
-                                socketService.stopTyping(orderId);
-                            }, 1000);
-                        }
-                    }}
-                    multiline
-                    maxHeight={100}
-                />
-                
-                <TouchableOpacity 
-                    style={[
-                        styles.sendButton,
-                        (!newMessage.trim() && !selectedImage) && styles.sendButtonDisabled
-                    ]}
-                    onPress={sendMessage}
-                    disabled={!newMessage.trim() && !selectedImage || sending}
-                >
-                    {sending ? (
-                        <ActivityIndicator size="small" color="#FFF" />
-                    ) : (
-                        <Icon name="send" size={20} color="#FFF" />
-                    )}
-                </TouchableOpacity>
+                <View style={styles.inputRow}>
+                    <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
+                        <MaterialIcon name="attachment" size={24} color={COLORS.accent} />
+                    </TouchableOpacity>
+                    
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.textInput}
+                            placeholder="Type a message..."
+                            placeholderTextColor={COLORS.textLight}
+                            value={newMessage}
+                            onChangeText={(text) => {
+                                setNewMessage(text);
+                                // Handle typing indicator
+                                if (isConnected && text.length > 0) {
+                                    if (typingTimeoutRef.current) {
+                                        clearTimeout(typingTimeoutRef.current);
+                                    }
+                                    socketService.startTyping(orderId, userName);
+                                    typingTimeoutRef.current = setTimeout(() => {
+                                        socketService.stopTyping(orderId);
+                                    }, 1000);
+                                }
+                            }}
+                            multiline
+                            maxHeight={100}
+                        />
+                    </View>
+                    
+                    <TouchableOpacity 
+                        style={[
+                            styles.sendButton,
+                            (!newMessage.trim() && !selectedImage) && styles.sendButtonDisabled
+                        ]}
+                        onPress={sendMessage}
+                        disabled={!newMessage.trim() && !selectedImage || sending}
+                    >
+                        {sending ? (
+                            <ActivityIndicator size="small" color={COLORS.textWhite} />
+                        ) : (
+                            <MaterialIcon name="send" size={20} color={COLORS.textWhite} />
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
             
             {/* Image Viewer Modal */}
@@ -558,7 +600,7 @@ const OrderChat = ({ orderId, currentUserType = 'manufacture' }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: COLORS.backgroundSecondary,
     },
     loadingContainer: {
         flex: 1,
@@ -572,15 +614,28 @@ const styles = StyleSheet.create({
     },
     dateHeader: {
         alignItems: 'center',
-        marginVertical: 16,
+        marginVertical: SPACING.lg,
+    },
+    dateHeaderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+    },
+    dateHeaderLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: COLORS.border,
     },
     dateHeaderText: {
-        fontSize: 12,
-        color: '#6B7280',
-        backgroundColor: '#F3F4F6',
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 12,
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.medium,
+        color: COLORS.textSecondary,
+        backgroundColor: COLORS.cardBackground,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.xs,
+        borderRadius: BORDER_RADIUS.full,
+        marginHorizontal: SPACING.sm,
+        ...SHADOWS.sm,
     },
     messageContainer: {
         marginBottom: 12,
@@ -594,43 +649,55 @@ const styles = StyleSheet.create({
     },
     messageBubble: {
         maxWidth: '75%',
-        padding: 12,
-        borderRadius: 16,
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-            },
-            android: {
-                elevation: 1,
-            },
-        }),
+        padding: SPACING.md,
+        borderRadius: BORDER_RADIUS.xl,
+        ...SHADOWS.sm,
     },
     ownBubble: {
-        backgroundColor: '#007BFF',
-        borderBottomRightRadius: 4,
+        backgroundColor: COLORS.accent,
+        borderBottomRightRadius: BORDER_RADIUS.sm,
     },
     otherBubble: {
-        backgroundColor: '#FFFFFF',
-        borderBottomLeftRadius: 4,
+        backgroundColor: COLORS.cardBackground,
+        borderBottomLeftRadius: BORDER_RADIUS.sm,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    senderHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.xs,
+    },
+    avatarContainer: {
+        marginRight: SPACING.xs,
     },
     senderName: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#6B7280',
-        marginBottom: 4,
+        fontSize: FONT_SIZES.sm,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.textPrimary,
+        marginRight: SPACING.xs,
+    },
+    roleTag: {
+        backgroundColor: COLORS.accent + '15',
+        paddingHorizontal: SPACING.xs,
+        paddingVertical: 2,
+        borderRadius: BORDER_RADIUS.sm,
+    },
+    roleText: {
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.medium,
+        color: COLORS.accent,
     },
     messageText: {
-        fontSize: 14,
+        fontSize: FONT_SIZES.md,
         lineHeight: 20,
+        fontWeight: FONT_WEIGHTS.regular,
     },
     ownMessageText: {
-        color: '#FFFFFF',
+        color: COLORS.textWhite,
     },
     otherMessageText: {
-        color: '#1F2937',
+        color: COLORS.textPrimary,
     },
     messageImage: {
         width: 200,
@@ -644,13 +711,14 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     messageTime: {
-        fontSize: 11,
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.regular,
     },
     ownMessageTime: {
-        color: '#E0E7FF',
+        color: COLORS.textWhite + '80',
     },
     otherMessageTime: {
-        color: '#9CA3AF',
+        color: COLORS.textSecondary,
     },
     readIcon: {
         marginLeft: 4,
@@ -660,53 +728,110 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         paddingVertical: 60,
+        paddingHorizontal: SPACING.lg,
+    },
+    emptyIconContainer: {
+        backgroundColor: COLORS.backgroundSecondary,
+        padding: SPACING.xl,
+        borderRadius: BORDER_RADIUS.full,
+        marginBottom: SPACING.lg,
     },
     emptyText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#6B7280',
-        marginTop: 16,
+        fontSize: FONT_SIZES.xl,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.textPrimary,
+        marginBottom: SPACING.sm,
+        textAlign: 'center',
     },
     emptySubText: {
-        fontSize: 14,
-        color: '#9CA3AF',
-        marginTop: 4,
+        fontSize: FONT_SIZES.md,
+        color: COLORS.textSecondary,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: SPACING.lg,
+    },
+    emptyFeatures: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: SPACING.lg,
+    },
+    featureItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.xs,
+    },
+    featureText: {
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.textSecondary,
+        fontWeight: FONT_WEIGHTS.medium,
     },
     inputContainer: {
+        backgroundColor: COLORS.cardBackground,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+        paddingHorizontal: SPACING.md,
+        paddingTop: SPACING.sm,
+        paddingBottom: SPACING.md,
+        ...SHADOWS.sm,
+    },
+    connectionStatus: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.sm,
+    },
+    connectionDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        marginRight: SPACING.xs,
+    },
+    connectionText: {
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.textSecondary,
+        fontWeight: FONT_WEIGHTS.medium,
+    },
+    inputRow: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: '#FFFFFF',
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
+        gap: SPACING.sm,
     },
     attachButton: {
-        padding: 10,
-        marginRight: 8,
-    },
-    textInput: {
-        flex: 1,
-        minHeight: 40,
-        maxHeight: 100,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        backgroundColor: '#F3F4F6',
-        borderRadius: 20,
-        fontSize: 14,
-        color: '#1F2937',
-    },
-    sendButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#007BFF',
+        width: 44,
+        height: 44,
+        borderRadius: BORDER_RADIUS.full,
+        backgroundColor: COLORS.backgroundSecondary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 8,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    inputWrapper: {
+        flex: 1,
+        backgroundColor: COLORS.inputBackground,
+        borderRadius: BORDER_RADIUS.full,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    textInput: {
+        minHeight: 44,
+        maxHeight: 100,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+        fontSize: FONT_SIZES.md,
+        color: COLORS.textPrimary,
+        fontWeight: FONT_WEIGHTS.regular,
+    },
+    sendButton: {
+        width: 44,
+        height: 44,
+        borderRadius: BORDER_RADIUS.full,
+        backgroundColor: COLORS.accent,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...SHADOWS.sm,
     },
     sendButtonDisabled: {
-        backgroundColor: '#D1D5DB',
+        backgroundColor: COLORS.disabled,
     },
     selectedImageContainer: {
         paddingHorizontal: 16,
@@ -754,23 +879,37 @@ const styles = StyleSheet.create({
         height: '80%',
     },
     typingIndicator: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: '#F9FAFB',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+        backgroundColor: COLORS.backgroundSecondary,
+    },
+    typingDots: {
+        flexDirection: 'row',
+        marginRight: SPACING.sm,
+    },
+    dot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.accent,
+        marginRight: 2,
+    },
+    dot1: {
+        animationDelay: '0s',
+    },
+    dot2: {
+        animationDelay: '0.1s',
+    },
+    dot3: {
+        animationDelay: '0.2s',
     },
     typingText: {
-        fontSize: 12,
-        color: '#6B7280',
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.textSecondary,
         fontStyle: 'italic',
-    },
-    connectionIndicator: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 8,
-        position: 'absolute',
-        top: 26,
-        left: 8,
+        fontWeight: FONT_WEIGHTS.medium,
     },
 });
 

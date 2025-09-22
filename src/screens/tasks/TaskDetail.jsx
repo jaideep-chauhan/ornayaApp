@@ -739,9 +739,17 @@ const TaskDetail = () => {
                     </View>
                 </View>
 
-                <View style={[styles.card, { padding: 0, paddingTop: 16 }]}>
-                    <Text style={[styles.sectionTitle, { marginLeft: 16, marginBottom: 16 }]}>Comments & Messages</Text>
-                    <View style={{ height: 400 }}>
+                <View style={styles.chatCard}>
+                    <View style={styles.chatHeader}>
+                        <View style={styles.chatTitleContainer}>
+                            <Icon name="message-square" size={20} color="#3F8CFF" />
+                            <Text style={styles.chatTitle}>Comments & Messages</Text>
+                        </View>
+                        <View style={styles.chatBadge}>
+                            <Text style={styles.chatBadgeText}>Live</Text>
+                        </View>
+                    </View>
+                    <View style={styles.chatContainer}>
                         <OrderChat 
                             orderId={currentItem?.order_id || currentItem?.repair_id || currentItem?.id || taskId}
                             currentUserType="manufacture"
@@ -1752,5 +1760,55 @@ const styles = StyleSheet.create({
 
     iconButton: {
         marginLeft: 10,
+    },
+    // Enhanced Chat Styles
+    chatCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        marginBottom: 16,
+        overflow: 'hidden',
+        // iOS shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        // Android shadow
+        elevation: 3,
+    },
+    chatHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        backgroundColor: '#F8FAFC',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+    },
+    chatTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    chatTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1F2937',
+    },
+    chatBadge: {
+        backgroundColor: '#10B981',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    chatBadgeText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: '#FFFFFF',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    chatContainer: {
+        height: 450,
     },
 });

@@ -10,6 +10,7 @@ import TabNavigator from './TabNavigator';
 import TaskDetail from '../screens/tasks/TaskDetail';
 import MaterialUsageScreen from '../components/MaterialUsage';
 import MaterialRequestDetail from '../screens/materials/MaterialRequestDetail';
+import MaterialList from '../screens/materials/MaterialList';
 import EditProfile from '../screens/setting/EditProfile';
 import ApiTestScreen from '../screens/ApiTestScreen';
 
@@ -55,6 +56,7 @@ const MainNavigator = () => {
                         <Stack.Screen name="TaskDetail" component={TaskDetail} />
                         <Stack.Screen name="MaterialUsage" component={MaterialUsageScreen} />
                         <Stack.Screen name="MaterialRequestDetail" component={MaterialRequestDetail} />
+                        <Stack.Screen name="MaterialList" component={MaterialList} />
                         <Stack.Screen name="EditProfile" component={EditProfile} />
                         <Stack.Screen name="ApiTest" component={ApiTestScreen} />
                     </>

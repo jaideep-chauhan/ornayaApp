@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
 // API Configuration
-const DEV_URL = 'http://10.0.2.2:3000/api/'; // Android emulator
+const DEV_URL = 'https://api.ornaaya.com/api/'; // Android emulator
 // const DEV_URL = 'http://192.168.1.XXX:3000/api/'; // Physical device
 const PROD_URL = 'https://api.ornaaya.com/api/';
 
@@ -56,10 +56,10 @@ const callApi = async ({ route, method = 'GET', body, baseUrl = BASE_URL }) => {
                 delete headers['Content-Type'];
             }
         }
-        
+
         console.log('Making request to:', `${baseUrl}${route}`);
         console.log('Request options:', JSON.stringify(options, null, 2));
-        
+
         const response = await fetch(`${baseUrl}${route}`, options);
 
         console.log('Response status:', response.status);
@@ -70,64 +70,64 @@ const callApi = async ({ route, method = 'GET', body, baseUrl = BASE_URL }) => {
 
         let data = text ? JSON.parse(text) : null;
 
-    // If unauthorized, and not already a refresh-token call, try to refresh
-    if (
-        response.status === 401 &&
-        !route.includes('refresh-token') &&
-        !(data?.message?.includes('Invalid password'))
-    ) {
-        try {
-            const refreshToken = await getRefreshToken();
-            const refreshRes = await fetch(
-                `${BASE_URL}auth/refresh-token`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Client-Type': 'mobile',
-                    },
-                    body: JSON.stringify({ refreshToken }),
-                    credentials: 'include',
-                }
-            );
-
-            if (refreshRes.ok) {
-                const refreshData = await refreshRes.json();
-                // store new tokens
-                await AsyncStorage.setItem(
-                    'token',
-                    JSON.stringify(refreshData.tokens)
+        // If unauthorized, and not already a refresh-token call, try to refresh
+        if (
+            response.status === 401 &&
+            !route.includes('refresh-token') &&
+            !(data?.message?.includes('Invalid password'))
+        ) {
+            try {
+                const refreshToken = await getRefreshToken();
+                const refreshRes = await fetch(
+                    `${BASE_URL}auth/refresh-token`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Client-Type': 'mobile',
+                        },
+                        body: JSON.stringify({ refreshToken }),
+                        credentials: 'include',
+                    }
                 );
-                // retry original request
-                return callApi({ route, method, body, baseUrl });
-            } else {
+
+                if (refreshRes.ok) {
+                    const refreshData = await refreshRes.json();
+                    // store new tokens
+                    await AsyncStorage.setItem(
+                        'token',
+                        JSON.stringify(refreshData.tokens)
+                    );
+                    // retry original request
+                    return callApi({ route, method, body, baseUrl });
+                } else {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Session expired. Please log in again.',
+                    });
+                    return null;
+                }
+            } catch (refreshErr) {
+                console.error('Refresh token error:', refreshErr);
                 Toast.show({
                     type: 'error',
-                    text1: 'Session expired. Please log in again.',
+                    text1: 'Failed to refresh session. Please log in again.',
                 });
                 return null;
             }
-        } catch (refreshErr) {
-            console.error('Refresh token error:', refreshErr);
-            Toast.show({
-                type: 'error',
-                text1: 'Failed to refresh session. Please log in again.',
-            });
-            return null;
         }
-    }
 
-    return {
-        data,
-        status: response.status,
-        ok: response.ok,
-        message: response?.message,
-    };
+        return {
+            data,
+            status: response.status,
+            ok: response.ok,
+            message: response?.message,
+        };
     } catch (error) {
         console.error('Network error in callApi:', error);
         console.error('Error type:', typeof error);
         console.error('Error message:', error.message);
-        
+
         // Re-throw the error so it can be handled by the calling function
         throw error;
     }
@@ -147,11 +147,11 @@ export const updateOrderDetails = async (updateData) => {
         console.log('Updating order with data:', updateData);
         console.log('Making POST request to: manufacture/add/order/updates');
         console.log('Base URL:', BASE_URL);
-        
+
         const response = await apiPost('manufacture/add/order/updates', updateData);
-        
+
         console.log('Raw response received:', response);
-        
+
         if (response && response.ok) {
             console.log('Order update successful:', response.data);
             return response;
@@ -165,17 +165,17 @@ export const updateOrderDetails = async (updateData) => {
         console.error('Error type:', typeof error);
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
-        
+
         // Check if it's a network error
         if (error.message === 'Network request failed') {
             throw new Error('Network connection failed. Please check your internet connection and try again.');
         }
-        
+
         // Check if it's a fetch error
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
             throw new Error('Unable to connect to server. Please check your connection.');
         }
-        
+
         throw error;
     }
 };
