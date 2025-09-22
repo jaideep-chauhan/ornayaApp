@@ -18,7 +18,8 @@ import { loginUser, clearError } from '../../store/slices/authSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import { createCommonStyles } from '../../utils/commonStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { COLORS, SHADOWS, SPACING, BORDER_RADIUS, FONT_SIZES, FONT_WEIGHTS } from '../../constants/theme';
 import Toast from 'react-native-toast-message';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -92,38 +93,58 @@ export default function LoginScreen() {
                                 </View>
                             )}
 
-                            <Text style={styles.label}>Company ID</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter your company ID"
-                                placeholderTextColor={theme.colors.textSecondary}
-                                value={formData.company_key}
-                                onChangeText={(value) => handleInputChange('company_key', value)}
-                                editable={!loading}
-                            />
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Company ID</Text>
+                                <View style={styles.inputWrapper}>
+                                    <MaterialIcon name="domain" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Enter your company ID"
+                                        placeholderTextColor={COLORS.textLight}
+                                        value={formData.company_key}
+                                        onChangeText={(value) => handleInputChange('company_key', value)}
+                                        editable={!loading}
+                                        autoCorrect={false}
+                                        autoCapitalize="none"
+                                    />
+                                </View>
+                            </View>
 
-                            <Text style={styles.label}>Email</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter your email"
-                                placeholderTextColor={theme.colors.textSecondary}
-                                value={formData.username}
-                                onChangeText={(value) => handleInputChange('username', value)}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                editable={!loading}
-                            />
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Email</Text>
+                                <View style={styles.inputWrapper}>
+                                    <MaterialIcon name="email-outline" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Enter your email"
+                                        placeholderTextColor={COLORS.textLight}
+                                        value={formData.username}
+                                        onChangeText={(value) => handleInputChange('username', value)}
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        editable={!loading}
+                                    />
+                                </View>
+                            </View>
 
-                            <Text style={styles.label}>Password</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter your password"
-                                placeholderTextColor={theme.colors.textSecondary}
-                                secureTextEntry
-                                value={formData.password}
-                                onChangeText={(value) => handleInputChange('password', value)}
-                                editable={!loading}
-                            />
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Password</Text>
+                                <View style={styles.inputWrapper}>
+                                    <MaterialIcon name="lock-outline" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Enter your password"
+                                        placeholderTextColor={COLORS.textLight}
+                                        secureTextEntry
+                                        value={formData.password}
+                                        onChangeText={(value) => handleInputChange('password', value)}
+                                        editable={!loading}
+                                        autoCorrect={false}
+                                        autoCapitalize="none"
+                                    />
+                                </View>
+                            </View>
 
                             <TouchableOpacity 
                                 style={styles.forgotPasswordContainer}
@@ -133,14 +154,21 @@ export default function LoginScreen() {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={styles.loginButton}
+                                style={[
+                                    styles.loginButton,
+                                    (loading || !formData.username || !formData.password) && styles.loginButtonDisabled
+                                ]}
                                 onPress={handleLogin}
                                 disabled={loading || !formData.username || !formData.password}
+                                activeOpacity={0.8}
                             >
                                 {loading ? (
-                                    <ActivityIndicator color={theme.colors.textInverse} size="small" />
+                                    <ActivityIndicator color={COLORS.textWhite} size="small" />
                                 ) : (
-                                    <Text style={[commonStyles.primaryButtonText, styles.loginText]}>Login</Text>
+                                    <>
+                                        <MaterialIcon name="login" size={20} color={COLORS.textWhite} style={styles.buttonIcon} />
+                                        <Text style={styles.loginText}>Login</Text>
+                                    </>
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -179,39 +207,30 @@ const createStyles = (theme) => StyleSheet.create({
         width: '100%',
     },
     logo: {
-        fontSize: 32,
-        fontWeight: '700',
-        color: theme.colors.text,
-        marginBottom: theme.spacing.xs,
+        fontSize: FONT_SIZES.header,
+        fontWeight: FONT_WEIGHTS.bold,
+        color: COLORS.textPrimary,
+        marginBottom: SPACING.sm,
+        marginTop: SPACING.md,
     },
     subtitle: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: theme.colors.textSecondary,
+        fontSize: FONT_SIZES.md,
+        fontWeight: FONT_WEIGHTS.regular,
+        color: COLORS.textSecondary,
         textAlign: 'center',
-        marginBottom: theme.spacing.xl,
-        paddingHorizontal: theme.spacing.md,
+        marginBottom: SPACING.xxl,
+        paddingHorizontal: SPACING.md,
+        lineHeight: 20,
     },
     card: {
-        padding: 20,
+        padding: SPACING.xl,
         width: '100%',
         maxWidth: 400,
         borderWidth: 1,
         borderColor: COLORS.border,
-        borderRadius: BORDER_RADIUS.lg,
+        borderRadius: BORDER_RADIUS.xl,
         backgroundColor: COLORS.cardBackground,
-
-        // iOS shadow
-        shadowColor: COLORS.shadow,
-        shadowOffset: {
-            width: 0,
-            height: 0,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-
-        // Android shadow
-        elevation: 0.5,
+        ...SHADOWS.lg,
     }
     ,
     errorContainer: {
@@ -223,20 +242,38 @@ const createStyles = (theme) => StyleSheet.create({
     errorText: {
         textAlign: 'center',
     },
-    label: {
-        fontSize: 14,
-        fontWeight: '400',
-        marginTop: theme.spacing.md,
-        marginBottom: theme.spacing.sm,
-        color: theme.colors.text,
+    inputContainer: {
+        marginBottom: SPACING.md,
     },
-    input: {
-        height: 44,
+    label: {
+        fontSize: FONT_SIZES.md,
+        fontWeight: FONT_WEIGHTS.medium,
+        marginBottom: SPACING.sm,
+        color: COLORS.textPrimary,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.inputBackground,
         borderWidth: 1,
         borderColor: COLORS.border,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        marginBottom: 10,
+        borderRadius: BORDER_RADIUS.lg,
+        paddingHorizontal: SPACING.md,
+        height: 48,
+        ...SHADOWS.sm,
+    },
+    inputIcon: {
+        marginRight: SPACING.sm,
+    },
+    input: {
+        flex: 1,
+        fontSize: FONT_SIZES.md,
+        fontWeight: FONT_WEIGHTS.regular,
+        color: COLORS.textPrimary,
+        backgroundColor: 'transparent',
+        paddingVertical: 0,
+        includeFontPadding: false,
+        textAlignVertical: 'center',
     },
     row: {
         flexDirection: 'row',
@@ -277,24 +314,38 @@ const createStyles = (theme) => StyleSheet.create({
         marginBottom: theme.spacing.md,
     },
     forgotPasswordText: {
-        color: theme.colors.primary,
-        fontWeight: '500',
-        fontSize: 14,
+        color: COLORS.accent,
+        fontWeight: FONT_WEIGHTS.medium,
+        fontSize: FONT_SIZES.md,
     },
     loginButton: {
+        flexDirection: 'row',
         backgroundColor: COLORS.accent,
-        borderRadius: 10,
-        paddingVertical: 12,
-        marginTop: 20,
+        borderRadius: BORDER_RADIUS.lg,
+        paddingVertical: SPACING.md,
+        paddingHorizontal: SPACING.lg,
+        marginTop: SPACING.lg,
         alignItems: 'center',
+        justifyContent: 'center',
+        ...SHADOWS.md,
+    },
+    loginButtonDisabled: {
+        backgroundColor: COLORS.disabled,
+        ...SHADOWS.sm,
+    },
+    buttonIcon: {
+        marginRight: SPACING.sm,
     },
     loginText: {
-        // Styles handled by commonStyles.primaryButtonText
+        fontSize: FONT_SIZES.lg,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.textWhite,
     },
     poweredBy: {
-        fontSize: 12,
-        color: theme.colors.textLight,
-        marginTop: theme.spacing.lg,
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.textLight,
+        marginTop: SPACING.xl,
+        fontWeight: FONT_WEIGHTS.regular,
     },
     footer: {
         alignItems: 'center',
@@ -302,7 +353,7 @@ const createStyles = (theme) => StyleSheet.create({
     },
     helpLink: {
         color: COLORS.accent,
-        fontWeight: 400,
-        fontSize: 12,
+        fontWeight: FONT_WEIGHTS.medium,
+        fontSize: FONT_SIZES.sm,
     },
 });
