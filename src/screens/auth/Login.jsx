@@ -67,7 +67,12 @@ export default function LoginScreen() {
             return;
         }
 
-        dispatch(loginUser(formData));
+        const result = await dispatch(loginUser(formData));
+        
+        // Only clear password on failed login
+        if (loginUser.rejected.match(result)) {
+            setFormData(prev => ({ ...prev, password: '' }));
+        }
     };
 
     const styles = createStyles(theme);

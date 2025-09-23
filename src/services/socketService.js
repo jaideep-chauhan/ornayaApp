@@ -51,10 +51,12 @@ class SocketService {
                     auth: {
                         token: accessToken
                     },
-                    transports: ['websocket', 'polling'],
+                    transports: ['polling', 'websocket'],
                     reconnection: true,
                     reconnectionAttempts: 5,
                     reconnectionDelay: 1000,
+                    timeout: 10000,
+                    forceNew: true,
                 });
 
                 // Set up a timeout for connection

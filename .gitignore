@@ -14,6 +14,11 @@ ios/build/
 # Exclude all build folders recursively
 **/build/
 
+# Android build files
+android/.gradle/
+android/app/.cxx/
+*.hprof
+
 # Temp files
 temp/
 
