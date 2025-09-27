@@ -46,28 +46,26 @@ const filterTextColors = {
 
 const StatusBadge = ({ status }) => {
     const bgColor = {
-        New: '#D6D6FD',
-        'In progress': '#D6D6FD',
-        completed: '#B9E6E8',
-        pending: '#FFF0E0', // Added for API response status
+        'pending': '#D6D6FD',
+        'in progress': '#C5E0FF',
+        'completed': '#B9E6E8',
     };
 
     // Text colors for different statuses
     const textColor = {
-        New: '#4A4AFC',
-        'In progress': '#4A4AFC',
-        Completed: '#009CA6',
-        Pending: '#FF8C00',
+        'pending': '#6868AB',
+        'in progress': '#4A4AFC',
+        'completed': '#009CA6',
     };
 
     // Determine display status text based on backend status
-    const displayStatus = status === 'pending' ? 'New' : status;
+    const displayStatus = status === 'pending' ? 'New' : status === 'in progress' ? 'In progress' : status === 'completed' ? 'Completed' : status;
 
     return (
-        <View style={[styles.statusBadge, { backgroundColor: bgColor[displayStatus] || COLORS.border }]}>
+        <View style={[styles.statusBadge, { backgroundColor: bgColor[status] || COLORS.border }]}>
             <Text style={[
                 styles.statusText,
-                { color: textColor[displayStatus] || COLORS.textPrimary }, // Default to primary text color if unknown
+                { color: textColor[status] || COLORS.textPrimary },
             ]}>
                 {displayStatus}
             </Text>
@@ -177,7 +175,7 @@ const TaskList = () => {
         const statusMap = {
             'All': 'all',
             'New': 'pending',
-            'In progress': 'inProgress',
+            'In progress': 'in progress',
             'Completed': 'completed'
         };
 

@@ -109,10 +109,16 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
 
                 return {
                     material_id: materialId,
-                    quantity: lastUsedQuantity.toString(), // Start with last used quantity (0 if never used)
-                    assignedQuantity: assignedQuantity, // Store assigned quantity for validation
+                    quantity: lastUsedQuantity.toString(),
+                    assignedQuantity: assignedQuantity,
                     unit: unit,
-                    name: materialName || `Material ID: ${materialId}`
+                    name: materialName || `Material ID: ${materialId}`,
+                    purity: assignedMaterial.purity || null,
+                    purity_unit: assignedMaterial.purity_unit || null,
+                    piece_count: assignedMaterial.piece_count || null,
+                    material_type: assignedMaterial.material_type || 'simple',
+                    supports_purity: assignedMaterial.supports_purity || false,
+                    supports_pieces: assignedMaterial.supports_pieces || false,
                 };
             }) || []);
 
@@ -380,9 +386,12 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
                     materials: validMaterials.map(material => ({
                         material_id: material.material_id,
                         quantity: parseFloat(material.quantity),
-                        unit: material.unit
+                        unit: material.unit,
+                        purity: material.purity || null,
+                        purity_unit: material.purity_unit || null,
+                        piece_count: material.piece_count || null,
                     })),
-                    process: completedProcesses // Array of completed process step names
+                    process: completedProcesses
                 };
 
                 console.log('Sending Task API data:', JSON.stringify(apiData, null, 2));
@@ -509,6 +518,16 @@ const EditTask = ({ task, taskId, onClose, onUpdate, isRepair = false }) => {
                                         <Text style={styles.materialMaxQuantity}>
                                             Max: {material.assignedQuantity || 0} {material.unit}
                                         </Text>
+                                        {material.purity && (
+                                            <Text style={styles.materialPurity}>
+                                                {material.purity}{material.purity_unit === 'karat' ? 'K' : '%'}
+                                            </Text>
+                                        )}
+                                        {material.piece_count && (
+                                            <Text style={styles.materialPieces}>
+                                                {material.piece_count} pc(s)
+                                            </Text>
+                                        )}
                                     </View>
                                 </View>
                                 <TextInput
@@ -811,6 +830,18 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: '#059669',
         fontStyle: 'italic',
+        marginTop: 2,
+    },
+    materialPurity: {
+        fontSize: 10,
+        color: '#D97706',
+        fontWeight: '600',
+        marginTop: 2,
+    },
+    materialPieces: {
+        fontSize: 10,
+        color: '#7C3AED',
+        fontWeight: '600',
         marginTop: 2,
     },
     materialId: {

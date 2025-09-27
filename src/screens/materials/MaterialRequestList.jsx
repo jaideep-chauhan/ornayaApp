@@ -13,12 +13,14 @@ import {
     Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import { Picker } from '@react-native-picker/picker';
 import { useDispatch, useSelector } from 'react-redux';
 import TopBar from '../../components/ui/TopBar';
 import { useNavigation } from '@react-navigation/native';
 import { fetchMaterialRequests, createMaterialRequest } from '../../store/slices/materialRequestSlice';
 import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import Toast from 'react-native-toast-message';
+import { apiGet } from '../../utils/api';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -102,18 +104,51 @@ const MaterialRequestCard = ({ navigation, request }) => {
 };
 
 const CreateRequestModal = ({ visible, onClose, onSubmit }) => {
+    const [materialId, setMaterialId] = useState('');
     const [materialName, setMaterialName] = useState('');
+    const [materials, setMaterials] = useState([]);
+    const [loadingMaterials, setLoadingMaterials] = useState(false);
     const [quantity, setQuantity] = useState('');
     const [unit, setUnit] = useState('');
     const [notes, setNotes] = useState('');
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        if (visible) {
+            fetchMaterials();
+        }
+    }, [visible]);
+
+    const fetchMaterials = async () => {
+        setLoadingMaterials(true);
+        try {
+            const response = await apiGet('/common/all/materials?is_material=true');
+            if (response.ok && response.data && response.data.data) {
+                setMaterials(response.data.data);
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Failed to Load Materials',
+                    text2: 'Unable to fetch materials list',
+                });
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: 'Materials Error',
+                text2: 'Network error, please try again',
+            });
+        } finally {
+            setLoadingMaterials(false);
+        }
+    };
+
     const handleSubmit = async () => {
-        if (!materialName.trim() || !quantity.trim()) {
+        if (!materialId || !quantity.trim()) {
             Toast.show({
                 type: 'error',
                 text1: 'Validation Error',
-                text2: 'Material name and quantity are required',
+                text2: 'Material and quantity are required',
             });
             return;
         }
@@ -121,15 +156,17 @@ const CreateRequestModal = ({ visible, onClose, onSubmit }) => {
         setLoading(true);
         try {
             const result = await onSubmit({
-                material_name: materialName.trim(),
+                material_id: parseInt(materialId),
+                material_name: materialName,
                 quantity: parseFloat(quantity),
-                unit: unit.trim() || 'units',
+                unit: unit.trim() || 'gram',
                 notes: notes.trim(),
             });
             
             // Only reset and close if successful
             if (result && result.meta && result.meta.requestStatus === 'fulfilled') {
                 // Reset form
+                setMaterialId('');
                 setMaterialName('');
                 setQuantity('');
                 setUnit('');
@@ -165,14 +202,34 @@ const CreateRequestModal = ({ visible, onClose, onSubmit }) => {
 
                     <ScrollView style={styles.modalBody}>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Material Name *</Text>
-                            <TextInput
-                                style={styles.textInput}
-                                value={materialName}
-                                onChangeText={setMaterialName}
-                                placeholder="e.g., Gold, Silver, Platinum"
-                                placeholderTextColor={COLORS.placeholder}
-                            />
+                            <Text style={styles.inputLabel}>Material *</Text>
+                            {loadingMaterials ? (
+                                <View style={styles.pickerLoading}>
+                                    <ActivityIndicator size="small" color={COLORS.accent} />
+                                    <Text style={styles.pickerLoadingText}>Loading materials...</Text>
+                                </View>
+                            ) : (
+                                <View style={styles.pickerContainer}>
+                                    <Picker
+                                        selectedValue={materialId}
+                                        onValueChange={(value) => {
+                                            setMaterialId(value);
+                                            const selected = materials.find(m => m.material_id === value);
+                                            setMaterialName(selected?.material || '');
+                                        }}
+                                        style={styles.picker}
+                                    >
+                                        <Picker.Item label="Select Material" value="" />
+                                        {materials.map((material) => (
+                                            <Picker.Item
+                                                key={material.material_id}
+                                                label={material.material}
+                                                value={material.material_id}
+                                            />
+                                        ))}
+                                    </Picker>
+                                </View>
+                            )}
                         </View>
 
                         <View style={styles.inputRow}>
@@ -220,7 +277,7 @@ const CreateRequestModal = ({ visible, onClose, onSubmit }) => {
                         <TouchableOpacity 
                             style={[styles.submitBtn, loading && styles.submitBtnDisabled]} 
                             onPress={handleSubmit}
-                            disabled={loading || !materialName.trim() || !quantity.trim()}
+                            disabled={loading || !materialId || !quantity.trim()}
                         >
                             {loading ? (
                                 <ActivityIndicator size="small" color={COLORS.textWhite} />
@@ -664,6 +721,32 @@ const styles = StyleSheet.create({
     textArea: {
         height: 80,
         textAlignVertical: 'top',
+    },
+    pickerContainer: {
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        borderRadius: BORDER_RADIUS.sm,
+        backgroundColor: COLORS.background,
+        overflow: 'hidden',
+    },
+    picker: {
+        height: 50,
+        color: COLORS.textPrimary,
+    },
+    pickerLoading: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        borderRadius: BORDER_RADIUS.sm,
+        backgroundColor: COLORS.background,
+    },
+    pickerLoadingText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: COLORS.textSecondary,
     },
     modalActions: {
         flexDirection: 'row',

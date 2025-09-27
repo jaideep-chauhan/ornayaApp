@@ -231,7 +231,7 @@ const tasksSlice = createSlice({
                             {
                                 id: 'T98433',
                                 title: 'Silver Pendant – 5 Stones',
-                                status: 'inProgress',
+                                status: 'in progress',
                                 createdAt: Date.now().toString(),
                                 deadline: (Date.now() + 5 * 24 * 60 * 60 * 1000).toString()  // 5 days from now
                             },
@@ -329,7 +329,7 @@ const filterTasks = (tasks, filter, searchQuery) => {
         // Handle different status formats from API vs UI
         const statusMap = {
             'New': 'pending',
-            'In progress': 'inProgress',
+            'In progress': 'in progress',
             'Completed': 'completed'
         };
 

@@ -239,6 +239,28 @@ const TaskComplete = ({ onClose, taskId, isRepair = false, task, isModal = false
                             <Text style={styles.descriptionText}>{activeTask.description}</Text>
                         </View>
                     )}
+                    {activeTask?.materials && activeTask.materials.length > 0 && (
+                        <View style={styles.materialsContainer}>
+                            <Text style={styles.label}>Materials Used:</Text>
+                            {activeTask.materials.map((material, index) => (
+                                <View key={index} style={styles.materialItem}>
+                                    <Text style={styles.materialText}>
+                                        • {material.quantity} {material.unit} {material.material_name || `Material #${material.material_id}`}
+                                    </Text>
+                                    {material.purity && (
+                                        <Text style={styles.materialMetaText}>
+                                            Purity: {material.purity}{material.purity_unit === 'karat' ? 'K' : '%'}
+                                        </Text>
+                                    )}
+                                    {material.piece_count && (
+                                        <Text style={styles.materialMetaText}>
+                                            Pieces: {material.piece_count}
+                                        </Text>
+                                    )}
+                                </View>
+                            ))}
+                        </View>
+                    )}
                 </View>
 
                 {/* Buttons */}
@@ -396,6 +418,28 @@ const styles = StyleSheet.create({
         color: '#666',
         lineHeight: 20,
         marginTop: 5,
+    },
+    materialsContainer: {
+        marginTop: 10,
+        paddingTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E5E5',
+    },
+    materialItem: {
+        marginTop: 8,
+        paddingLeft: 10,
+    },
+    materialText: {
+        fontSize: 13,
+        color: '#374151',
+        fontWeight: '500',
+        marginBottom: 4,
+    },
+    materialMetaText: {
+        fontSize: 11,
+        color: '#6B7280',
+        marginLeft: 20,
+        marginTop: 2,
     },
     btnRow: {
         width: '100%',
