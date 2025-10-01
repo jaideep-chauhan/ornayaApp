@@ -22,6 +22,7 @@ import {
     clearCurrentRequest 
 } from '../../store/slices/materialRequestSlice';
 import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import { formatDate } from '../../utils/dateFormatter';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -193,14 +194,28 @@ const MaterialRequestDetail = () => {
     });
 
     useEffect(() => {
+        console.log('=== MaterialRequestDetail Mounted ===');
+        console.log('requestId:', requestId);
+        console.log('route.params:', route.params);
+        console.log('currentRequest:', currentRequest);
+        
         if (requestId) {
+            console.log('Fetching material request details for ID:', requestId);
             dispatch(fetchMaterialRequestDetails(requestId));
+        } else {
+            console.warn('No requestId provided to MaterialRequestDetail');
         }
         
         return () => {
+            console.log('Clearing current request on unmount');
             dispatch(clearCurrentRequest());
         };
     }, [dispatch, requestId]);
+    
+    // Log currentRequest changes
+    useEffect(() => {
+        console.log('Current request updated:', currentRequest);
+    }, [currentRequest]);
 
     const handleRefresh = () => {
         if (requestId) {
@@ -208,29 +223,20 @@ const MaterialRequestDetail = () => {
         }
     };
 
-    const handleEdit = async (updateData) => {
-        try {
-            await dispatch(updateMaterialRequest({ requestId, updateData }));
-            setShowEditModal(false);
-            handleRefresh();
-        } catch (error) {
-            console.error('Error updating request:', error);
-        }
+    const handleEdit = (updateData) => {
+        dispatch(updateMaterialRequest({ requestId, updateData }))
+            .unwrap()
+            .then(() => {
+                setShowEditModal(false);
+                handleRefresh();
+            })
+            .catch((error) => {
+                console.error('Error updating request:', error);
+            });
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        try {
-            return new Date(dateString).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-        } catch (error) {
-            return 'Invalid Date';
-        }
+    const formatDateTime = (dateValue) => {
+        return formatDate(dateValue, { includeTime: true });
     };
 
     if (detailsLoading) {
@@ -276,10 +282,14 @@ const MaterialRequestDetail = () => {
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.headerContent}>
-                        <Text style={styles.requestTitle}>{currentRequest.material_name}</Text>
-                        <Text style={styles.requestId}>#{currentRequest.request_id || currentRequest.id}</Text>
+                        <Text style={styles.requestTitle}>
+                            {currentRequest.material_name || 'Material Request'}
+                        </Text>
+                        <Text style={styles.requestId}>
+                            #{currentRequest.request_id || currentRequest.id || 'Unknown'}
+                        </Text>
                     </View>
-                    <StatusBadge status={currentRequest.status} />
+                    <StatusBadge status={currentRequest.status || 'pending'} />
                 </View>
 
                 {/* Basic Info */}
@@ -288,15 +298,44 @@ const MaterialRequestDetail = () => {
                     <View style={styles.infoRow}>
                         <InfoCard 
                             label="Quantity" 
-                            value={`${currentRequest.quantity || 0} ${currentRequest.unit || 'units'}`}
+                            value={`${currentRequest.quantity || currentRequest.requested_quantity || 0} ${currentRequest.unit || 'g'}`}
                             icon="package"
                         />
                         <InfoCard 
                             label="Created" 
-                            value={formatDate(currentRequest.createdAt || currentRequest.created_at)}
+                            value={formatDateTime(currentRequest.createdAt || currentRequest.created_at || currentRequest.date)}
                             icon="calendar"
                         />
                     </View>
+                    
+                    {/* Additional Info */}
+                    {currentRequest.priority && (
+                        <View style={styles.infoRow}>
+                            <InfoCard 
+                                label="Priority" 
+                                value={currentRequest.priority.charAt(0).toUpperCase() + currentRequest.priority.slice(1)}
+                                icon="alert-circle"
+                            />
+                            {currentRequest.current_quantity !== undefined && (
+                                <InfoCard 
+                                    label="Current Stock" 
+                                    value={`${currentRequest.current_quantity} ${currentRequest.unit || 'g'}`}
+                                    icon="archive"
+                                />
+                            )}
+                        </View>
+                    )}
+                    
+                    {/* Member Information */}
+                    {currentRequest.member_name && (
+                        <View style={styles.memberInfo}>
+                            <Text style={styles.memberLabel}>Requested By:</Text>
+                            <Text style={styles.memberName}>
+                                {currentRequest.member_name}
+                                {currentRequest.member_designation && ` - ${currentRequest.member_designation}`}
+                            </Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* Notes */}
@@ -325,7 +364,7 @@ const MaterialRequestDetail = () => {
                         {currentRequest.delivery_date && (
                             <InfoCard 
                                 label="Expected Delivery" 
-                                value={formatDate(currentRequest.delivery_date)}
+                                value={formatDateTime(currentRequest.delivery_date)}
                                 icon="truck"
                             />
                         )}
@@ -631,5 +670,24 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '500',
         color: COLORS.textWhite,
+    },
+    memberInfo: {
+        marginTop: 12,
+        padding: 12,
+        backgroundColor: COLORS.background,
+        borderRadius: BORDER_RADIUS.sm,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    memberLabel: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        fontWeight: '500',
+        marginBottom: 4,
+    },
+    memberName: {
+        fontSize: 14,
+        color: COLORS.textPrimary,
+        fontWeight: '600',
     },
 });

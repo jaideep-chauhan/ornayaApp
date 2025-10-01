@@ -21,6 +21,7 @@ import { fetchMaterialRequests, createMaterialRequest } from '../../store/slices
 import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import Toast from 'react-native-toast-message';
 import { apiGet } from '../../utils/api';
+import { formatDate } from '../../utils/dateFormatter';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -58,18 +59,8 @@ const MaterialRequestCard = ({ navigation, request }) => {
         return null;
     }
 
-    const formattedDate = (() => {
-        try {
-            if (request.createdAt) {
-                return new Date(request.createdAt).toLocaleDateString();
-            } else if (request.created_at) {
-                return new Date(request.created_at).toLocaleDateString();
-            }
-            return 'N/A';
-        } catch (error) {
-            return 'Invalid Date';
-        }
-    })();
+    const dateValue = request.createdAt || request.created_at || request.date;
+    const formattedDate = formatDate(dateValue);
 
     return (
         <View style={styles.requestCard}>
@@ -77,13 +68,75 @@ const MaterialRequestCard = ({ navigation, request }) => {
                 <Text style={styles.requestTitle}>{request.material_name || 'Material Request'}</Text>
                 <Text style={styles.requestDate}>{formattedDate}</Text>
             </View>
-            <Text style={styles.requestId}>#{request.request_id || request.id}</Text>
-            <Text style={styles.quantityText}>Quantity: {request.quantity || 0} {request.unit || 'units'}</Text>
+            
+            <View style={styles.requestIdRow}>
+                <Text style={styles.requestId}>#{request.request_id || request.id}</Text>
+                {request.priority && request.priority !== 'medium' && (
+                    <View style={[styles.priorityBadge, styles[`priority_${request.priority}`]]}>
+                        <Text style={styles.priorityText}>{request.priority.toUpperCase()}</Text>
+                    </View>
+                )}
+            </View>
+
+            {/* Order/Repair Reference */}
+            {(request.order_id || request.repair_id) && (
+                <View style={styles.referenceRow}>
+                    {request.order_id && (
+                        <View style={styles.referenceTag}>
+                            <Text style={styles.referenceText}>Order #{request.order_id}</Text>
+                            {request.order_title && (
+                                <Text style={styles.referenceName} numberOfLines={1}>{request.order_title}</Text>
+                            )}
+                        </View>
+                    )}
+                    {request.repair_id && (
+                        <View style={styles.referenceTag}>
+                            <Text style={styles.referenceText}>Repair #{request.repair_id}</Text>
+                            {request.repair_product && (
+                                <Text style={styles.referenceName} numberOfLines={1}>{request.repair_product}</Text>
+                            )}
+                        </View>
+                    )}
+                </View>
+            )}
+
+            {/* Quantity Details */}
+            <View style={styles.quantitySection}>
+                <Text style={styles.quantityText}>
+                    Requested: {request.requested_quantity || request.quantity || 0} {request.unit || 'g'}
+                </Text>
+                {request.current_quantity > 0 && (
+                    <Text style={styles.currentQuantityText}>
+                        Current: {request.current_quantity} {request.unit || 'g'}
+                    </Text>
+                )}
+                {request.approved_quantity && (
+                    <Text style={styles.approvedQuantityText}>
+                        Approved: {request.approved_quantity} {request.unit || 'g'}
+                    </Text>
+                )}
+            </View>
+
+            {/* Purity Information */}
+            {request.purity && (
+                <Text style={styles.purityText}>
+                    Purity: {request.purity} {request.purity_unit || ''}
+                </Text>
+            )}
+
+            {/* Member Information */}
+            {request.member_name && (
+                <Text style={styles.memberText}>
+                    By: {request.member_name} {request.member_designation ? `(${request.member_designation})` : ''}
+                </Text>
+            )}
+
             {request.notes && (
                 <Text style={styles.notesText} numberOfLines={2} ellipsizeMode="tail">
                     Notes: {request.notes}
                 </Text>
             )}
+            
             <View style={styles.requestBottom}>
                 <StatusBadge status={request.status} />
                 <TouchableOpacity
@@ -325,12 +378,14 @@ const MaterialRequestList = () => {
         dispatch(fetchMaterialRequests());
     };
 
-    const handleCreateRequest = async (requestData) => {
-        const result = await dispatch(createMaterialRequest(requestData));
-        if (createMaterialRequest.fulfilled.match(result)) {
-            handleRefresh();
-        }
-        return result;
+    const handleCreateRequest = (requestData) => {
+        const resultPromise = dispatch(createMaterialRequest(requestData));
+        resultPromise.then((result) => {
+            if (createMaterialRequest.fulfilled.match(result)) {
+                handleRefresh();
+            }
+        });
+        return resultPromise;
     };
 
     const filteredRequests = materialRequests.filter(request => {
@@ -585,6 +640,75 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         marginBottom: 10,
         lineHeight: 20,
+    },
+    requestIdRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    priorityBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 4,
+    },
+    priority_low: {
+        backgroundColor: COLORS.info + '20',
+    },
+    priority_high: {
+        backgroundColor: COLORS.warning + '20',
+    },
+    priority_urgent: {
+        backgroundColor: COLORS.danger + '20',
+    },
+    priorityText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: COLORS.textPrimary,
+    },
+    referenceRow: {
+        marginBottom: 10,
+    },
+    referenceTag: {
+        backgroundColor: COLORS.primary + '10',
+        padding: 6,
+        borderRadius: 6,
+        marginBottom: 4,
+    },
+    referenceText: {
+        fontSize: 12,
+        color: COLORS.primary,
+        fontWeight: '500',
+    },
+    referenceName: {
+        fontSize: 11,
+        color: COLORS.textSecondary,
+        marginTop: 2,
+    },
+    quantitySection: {
+        marginBottom: 8,
+    },
+    currentQuantityText: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        marginTop: 2,
+    },
+    approvedQuantityText: {
+        fontSize: 12,
+        color: COLORS.success,
+        marginTop: 2,
+        fontWeight: '500',
+    },
+    purityText: {
+        fontSize: 13,
+        color: COLORS.primary,
+        marginBottom: 6,
+    },
+    memberText: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        marginBottom: 8,
+        fontStyle: 'italic',
     },
     requestBottom: {
         flexDirection: 'row',

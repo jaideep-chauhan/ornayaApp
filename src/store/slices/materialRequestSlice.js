@@ -82,9 +82,11 @@ export const createMaterialRequest = createAsyncThunk(
 // Async thunk for fetching material request details by ID
 export const fetchMaterialRequestDetails = createAsyncThunk(
     'materialRequests/fetchMaterialRequestDetails',
-    async (requestId, { rejectWithValue }) => {
+    async (requestId, { rejectWithValue, getState }) => {
         try {
+            console.log('Fetching material request details for ID:', requestId);
             const response = await apiGet(`manufacture/material-request/${requestId}`);
+            console.log('Material request details response:', response);
 
             if (response.ok) {
                 // Handle different response structures
@@ -97,6 +99,17 @@ export const fetchMaterialRequestDetails = createAsyncThunk(
                 }
                 return response.data;
             } else {
+                // If API fails, try to find in existing list (for testing)
+                const state = getState();
+                const existingRequest = state.materialRequests.materialRequests.find(
+                    req => (req.request_id === requestId || req.id === requestId)
+                );
+                
+                if (existingRequest) {
+                    console.log('Using existing request data from list');
+                    return existingRequest;
+                }
+                
                 Toast.show({
                     type: 'error',
                     text1: 'Failed to Load Request Details',
@@ -105,6 +118,19 @@ export const fetchMaterialRequestDetails = createAsyncThunk(
                 return rejectWithValue(response.data?.message || 'Failed to fetch request details');
             }
         } catch (error) {
+            console.error('Error fetching material request details:', error);
+            
+            // If API fails due to network error, try to find in existing list (for testing)
+            const state = getState();
+            const existingRequest = state.materialRequests.materialRequests.find(
+                req => (req.request_id === requestId || req.id === requestId)
+            );
+            
+            if (existingRequest) {
+                console.log('Using existing request data from list (network fallback)');
+                return existingRequest;
+            }
+            
             Toast.show({
                 type: 'error',
                 text1: 'Request Details Error',
@@ -220,6 +246,10 @@ const materialRequestSlice = createSlice({
                 } else {
                     // Fallback to dummy data for development
                     if (state.materialRequests.length === 0) {
+                        const now = new Date();
+                        const yesterday = new Date(now.getTime() - 86400000);
+                        const twoDaysAgo = new Date(now.getTime() - 172800000);
+                        
                         state.materialRequests = [
                             {
                                 request_id: 'MR001',
@@ -229,7 +259,12 @@ const materialRequestSlice = createSlice({
                                 unit: 'g',
                                 notes: 'Needed for urgent pendant orders',
                                 status: 'pending',
-                                createdAt: new Date().toISOString(),
+                                priority: 'high',
+                                createdAt: now.toISOString(),
+                                created_at: now.toISOString(),
+                                member_name: 'John Smith',
+                                member_designation: 'Craftsman',
+                                current_quantity: 15,
                             },
                             {
                                 request_id: 'MR002',
@@ -237,10 +272,16 @@ const materialRequestSlice = createSlice({
                                 material_name: 'Silver 925',
                                 quantity: 100,
                                 unit: 'g',
-                                notes: 'For ring production',
+                                notes: 'For ring production batch',
                                 status: 'approved',
-                                createdAt: new Date(Date.now() - 86400000).toISOString(),
+                                priority: 'medium',
+                                createdAt: yesterday.toISOString(),
+                                created_at: yesterday.toISOString(),
                                 approved_quantity: 100,
+                                delivery_date: now.toISOString(),
+                                response_notes: 'Approved. Will be delivered by end of day.',
+                                member_name: 'Sarah Johnson',
+                                member_designation: 'Senior Artisan',
                             },
                             {
                                 request_id: 'MR003',
@@ -248,10 +289,14 @@ const materialRequestSlice = createSlice({
                                 material_name: 'Platinum',
                                 quantity: 25,
                                 unit: 'g',
-                                notes: 'Premium collection requirements',
+                                notes: 'Premium collection requirements for VIP client',
                                 status: 'rejected',
-                                createdAt: new Date(Date.now() - 172800000).toISOString(),
-                                response_notes: 'Insufficient stock available',
+                                priority: 'urgent',
+                                createdAt: twoDaysAgo.toISOString(),
+                                created_at: twoDaysAgo.toISOString(),
+                                response_notes: 'Insufficient stock available. Expected restocking in 2 weeks.',
+                                member_name: 'Mike Wilson',
+                                member_designation: 'Production Manager',
                             },
                         ];
                     }
