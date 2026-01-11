@@ -8,11 +8,13 @@ import LoginScreen from '../screens/auth/Login';
 import ForgotPasswordScreen from '../screens/auth/ForgotPassword';
 import TabNavigator from './TabNavigator';
 import TaskDetail from '../screens/tasks/TaskDetail';
+import TaskDetailEnhanced from '../screens/tasks/TaskDetailEnhanced';
 import MaterialUsageScreen from '../components/MaterialUsage';
 import MaterialRequestDetail from '../screens/materials/MaterialRequestDetail';
 import MaterialList from '../screens/materials/MaterialList';
 import EditProfile from '../screens/setting/EditProfile';
 import ApiTestScreen from '../screens/ApiTestScreen';
+import QRScanner from '../screens/QRScanner';
 
 const Stack = createNativeStackNavigator();
 
@@ -54,6 +56,8 @@ const MainNavigator = () => {
                     <>
                         <Stack.Screen name="Main" component={TabNavigator} />
                         <Stack.Screen name="TaskDetail" component={TaskDetail} />
+                        <Stack.Screen name="TaskDetailEnhanced" component={TaskDetailEnhanced} />
+                        <Stack.Screen name="QRScanner" component={QRScanner} />
                         <Stack.Screen name="MaterialUsage" component={MaterialUsageScreen} />
                         <Stack.Screen name="MaterialRequestDetail" component={MaterialRequestDetail} />
                         <Stack.Screen name="MaterialList" component={MaterialList} />
